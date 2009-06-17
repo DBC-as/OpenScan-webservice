@@ -1,12 +1,12 @@
 <?php
 // required for making request
-require_once("ws_lib/curl_class.php");
+require_once("OLS_class_lib/curl_class.php");
 // required for handling ini-file
-require_once("ws_lib/inifile_class.php");
+require_once("OLS_class_lib/inifile_class.php");
 // required for class-mapping
 require_once("scanService_classes.php");
 // required for handling xml
-require_once("ws_lib/xml_func_class.php");
+require_once("OLS_class_lib/xml_func_class.php");
 
 
 // get cofiguration
