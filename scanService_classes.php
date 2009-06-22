@@ -8,10 +8,12 @@ class scanRequest
 	public $maxFrequency;//integer
 	public $prefix;//string
 	public $upper;//string
+	public $callback;//string
 }
 class scanResponse
 {
 	public $term;//term
+	public $error;//string
 }
 class term
 {

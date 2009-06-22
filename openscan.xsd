@@ -15,6 +15,7 @@
 				<xs:element ref="scan:maxFrequency" minOccurs="0"/>
 				<xs:element ref="scan:prefix" minOccurs="0"/>
 				<xs:element ref="scan:upper" minOccurs="0"/>
+				<xs:element ref="scan:callback" minOccurs="0"/>
 			</xs:sequence>
 		</xs:complexType>
 	</xs:element>
@@ -22,6 +23,7 @@
 		<xs:complexType>
 			<xs:sequence>
 				<xs:element ref="scan:term" minOccurs="0" maxOccurs="unbounded"/>
+				<xs:element ref="scan:error" minOccurs="0" />
 			</xs:sequence>
 		</xs:complexType>
 	</xs:element>
@@ -34,6 +36,8 @@
 	<xs:element name="name" type="xs:string"/>
 	<xs:element name="prefix" type="xs:string"/>
 	<xs:element name="upper" type="xs:string"/>
+	<xs:element name="callback" type="xs:string"/>
+	<xs:element name="error" type="xs:string"/>
 	<xs:element name="term">
 		<xs:complexType>
 			<xs:sequence>
@@ -59,6 +63,22 @@
 			<xs:enumeration value="dc.relation"/>
 			<xs:enumeration value="dc.coverage"/>
 			<xs:enumeration value="dc.rights"/>
+			
+			<xs:enumeration value="title"/>
+			<xs:enumeration value="creator"/>
+			<xs:enumeration value="description"/>
+			<xs:enumeration value="subject"/>
+			<xs:enumeration value="type"/>
+			<xs:enumeration value="language"/>
+			<xs:enumeration value="date"/>
+			<xs:enumeration value="source"/>
+			<xs:enumeration value="publisher"/>
+			<xs:enumeration value="contributor"/>
+			<xs:enumeration value="format"/>
+			<xs:enumeration value="identifier"/>
+			<xs:enumeration value="relation"/>
+			<xs:enumeration value="coverage"/>
+			<xs:enumeration value="rights"/>
 		</xs:restriction>
 	</xs:simpleType>
 </xs:schema>

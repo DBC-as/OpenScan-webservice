@@ -1,8 +1,8 @@
 
 <html>
 <head>
-<script type="text/javascript" src="../javascript/jquery.js"></script>
-<script type="text/javascript" src="../javascript/jquery.autocomplete.js"></script>
+<script type="text/javascript" src="../../javascript/jquery.js"></script>
+<script type="text/javascript" src="../../javascript/jquery.autocomplete.js"></script>
 <link rel="stylesheet" type="text/css" href="autocomplete.css" />    
 
 <script type="text/javascript">
@@ -26,7 +26,7 @@ function refresh(e)
   var frame=document.getElementById("restframe");
   var txt=document.getElementById("rest").value;
 
-  var src="http://vision.dbc.dk/~pjo/webservices/openscan/server.php?terms=true";
+  var src="http://vision.dbc.dk/~pjo/OpenLibrary/OpenScan/trunk/server.php?terms=true";
   var query="field=dc.title&limit=10&lower="+txt+"&prefix="+txt;
   var url=src+"&"+query;
   frame.innerHTML="<iframe src="+url+" width='50%' height='300px' style='padding:5px'></iframe>";
@@ -68,7 +68,7 @@ Dette felt bruger soap. Tast nogle bogstaver og klik på 'GO' for at se resultat
 </form>
 Ramme med SOAP resultat
 <div style="width:50%;border:1px solid #CCCCCC;padding:5px;min-height:145px">
-  <?php echo htmlspecialchars(soap_request());?>
+    <?php echo htmlspecialchars(soap_request());?>
 </div>
 
 </body>
@@ -90,8 +90,13 @@ Ramme med SOAP resultat
     $Request["field"]="dc.title";
     $Request["limit"]=10;
     $Request["lower"]=$lower;
-    $client->openScan($Request);
+
+    try{$response=$client->openScan($Request);}
+    catch( SoapFault $e )
+    {return $e;}
+    
     // for example purpose we simply return the raw xml.
+    // return $client->__getFunctions();
     return $client->__getLastResponse();
   }
 ?>
