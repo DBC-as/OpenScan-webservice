@@ -7,39 +7,41 @@ require_once("ws_lib/inifile_class.php");
 require_once("scanService_classes.php");
 // required for handling xml
 require_once("ws_lib/xml_func_class.php");
+// required for logging
+require_once("ws_lib/verbose_class.php");
 
 
-// this call initializes the openscan_server
-$server = openscan_server::get_instance();
+// initialize openscan_server
+$server = openscan_server::get_instance("openscan.ini");
 $server->start();
 
 /**
-
-The server class for OpenScan webservice. Class is implemented as singleton instance.
+ * The server class for OpenScan webservice. Class is implemented as singleton instance.
  */
 class openscan_server
 {
+  private static $instance;
+  private $config;
+  private $verbose;
 
-  private $instance;
-
-  public function get_instance()
+  public static function get_instance($inifile)
   {
     if( !isset($instance) )
-      $instance = new openscan_server();
+      $instance = new openscan_server($inifile);
     return $instance;
-    }
+  }
 
-  public function __construct()
+  private function __construct($inifile)
   {
     // get cofiguration
-    $config=new inifile("openscan.ini");
-    if( !$config )
+    $this->config=new inifile($inifile);
+    if( !$this->config )
       die( "could not initialize configuration" );
+    // set verbose for logging
+    $this->verbose= new verbose($this->config->get_value("logfile", "setup"),$this->config->get_value("verbose", "setup"));
+   
     
     ini_set('soap.wsdl_cache_enabled',0); 
-
-    define(BASEURL, $config->get_value("baseurl","setup"));
-    define(WSDL,$config->get_value("wsdl","setup"));   
   }  
 
   public function start()
@@ -67,6 +69,10 @@ class openscan_server
       {
         $this->rest_request();
       }
+    elseif( isset($_GET['callback']) )
+      {
+	// TODO handle callback
+      }
     else // no valid request was made; generate an error
       {
 	// make a nice response to be polite
@@ -80,7 +86,16 @@ class openscan_server
 
   protected function HowRU()
   {
-    echo 'great';
+    // get test parmaeters from config-file
+    $testarray = $this->config->get_section("test");
+    $request = new scanRequest();
+    $request->limit=$testarray["limit"];    
+    $request->field=$testarray["field"];
+    $request->lower=$testarray["lower"];
+    if( $response = $this->openScan($request) )
+      echo 'great';
+    else
+      echo 'not to good, i got an error from openScan-function';
   }
 
   private function j_query($q)
@@ -92,9 +107,14 @@ class openscan_server
     // set url for request
     // TODO it must be possible to pass parameter such as limit and field in jquery. For now they are hardcoded
     
-    $url=BASEURL."&terms.fl=dc.title&terms.lower=".$q."&terms.prefix=".$q."&limit=10";
+    $url=$this->config->get_value("baseurl","setup")."&terms.fl=dc.title&terms.lower=".$q."&terms.prefix=".$q."&limit=10";
     
-    $xml=$this->get_xml($url);
+    $xml=$this->get_xml($url,$statuscode);
+    if( $statuscode != 200 )
+      {
+	$this->verbose->log(FATAL,"j_query::".$statuscode );
+	exit;
+      }
     $nodelist=$this->get_nodelist($xml); 
     
     // iterate results
@@ -111,12 +131,18 @@ class openscan_server
     // get the query
     $querystring =  $_SERVER['QUERY_STRING'];   
     // map the query to solr fields
-    $query = $this-> map_url($querystring);
+    $query = $this->map_url($querystring);
     // set url
-    $url = BASEURL.$query;
+    $url = $this->config->get_value("baseurl","setup").$query;
     
     // get the xml
-    $xml=$this->get_xml($url);
+    $xml=$this->get_xml($url,$statuscode);
+    if( $statuscode != 200 )
+      {
+	//TODO log
+	$this->verbose->log(FATAL,"rest_request::".$statuscode );
+	exit;
+      }
     // map xml to object    
     $response = $this->parse_response($xml);
     // print object as xml
@@ -132,7 +158,7 @@ class openscan_server
     ///////////////////   
 
     $params = array("trace"=>true, "classmap"=>$classmap);
-    $soap_server = new SoapServer(WSDL,$params);
+    $soap_server = new SoapServer($this->config->get_value("wsdl","setup"),$params);
     $soap_server->setObject($this);
     $soap_server->handle();
   }
@@ -141,15 +167,21 @@ class openscan_server
   public function openScan($request)
   {
     // make an url for request
-    if( ! $url=BASEURL.$this->get_query($request) )
+    if( ! $url=$this->config->get_value("baseurl","setup").$this->get_query($request) )
       {
 	// TODO errorhandling
 	return false;
       }
+    $xml=$this->get_xml($url,$statuscode);
+
+    if( $statuscode != 200 )   
+      { 
+	// TODO log xml with verbose
+	echo $xml;
+	return false;
+      }
     
-    $xml=$this->get_xml($url);
-    $response=$this->parse_response($xml);
-    
+    $response=$this->parse_response($xml);    
     return $response;  
     }
 
@@ -189,16 +221,16 @@ class openscan_server
 
 
   /** get xml from solr/autocomplete interface */
-  private function get_xml($url)
+  private function get_xml($url,&$statuscode)
   {
     // use curl class to retrieve results
     $curl=new curl();
     $curl->set_url($url);
     $xml=$curl->get();
+    $statuscode=$curl->get_status('http_code');
     
     return $xml;
   }
-
   /** map rest-url for solr-request */
   private function map_url(&$url)
   {
