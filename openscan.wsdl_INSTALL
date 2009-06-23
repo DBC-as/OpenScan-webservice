@@ -31,7 +31,7 @@
 	</wsdl:binding>
 	<wsdl:service name="scanService">
 		<wsdl:port name="scanPort" binding="tns:scanBinding">
-			<soap:address location="http://vision.dbc.dk/~pjo/webservices/openscan/server.php"/>
+			<soap:address location="http://vision.dbc.dk/~pjo/OpenLibrary/OpenScan/trunk/server.php"/>
 		</wsdl:port>
 	</wsdl:service>
 </wsdl:definitions>

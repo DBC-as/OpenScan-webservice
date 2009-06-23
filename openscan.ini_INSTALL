@@ -25,3 +25,9 @@ classes = scanService_classes.php
 
 ;url to solr-autocomplete interface
 baseurl=http://andrus.dbc.dk:8080/apache-solr-nightly/autocomplete?terms=true
+
+[test]
+; array for testing
+field=dc.title
+limit=10
+lower=gorm

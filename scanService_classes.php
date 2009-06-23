@@ -9,11 +9,16 @@ class scanRequest
 	public $prefix;//string
 	public $upper;//string
 	public $callback;//string
+	public $outputType;//output
 }
 class scanResponse
 {
 	public $term;//term
 	public $error;//string
+}
+class output
+{
+	public $output;//string
 }
 class term
 {
@@ -26,6 +31,7 @@ class fieldType
 }
 $classmap=array("scanRequest"=>"scanRequest",
 "scanResponse"=>"scanResponse",
+"output"=>"output",
 "term"=>"term",
 "fieldType"=>"fieldType");
 ?>

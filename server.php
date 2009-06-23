@@ -1,5 +1,26 @@
 <?php
-// required for making request
+
+/**                                                                   
+ *                                                                    
+ * This file is part of OpenScan.                                 
+ * Copyright © 2009, Dansk Bibliotekscenter a/s,                      
+ * Tempovej 7-11, DK-2750 Ballerup, Denmark. CVR: 15149043            
+ *                                                                    
+ * OpenScan is free software: you can redistribute it and/or modify 
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or          
+ * (at your option) any later version.                                        
+ *                                                                            
+ * OpenScan is distributed in the hope that it will be useful,              
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of             
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the              
+ * GNU Affero General Public License for more details.                        
+ *                                                                            
+ * You should have received a copy of the GNU Affero General Public License   
+ * along with OpenSearch.  If not, see <http://www.gnu.org/licenses/>.        
+*/                      
+
+// required for making remote calls
 require_once("ws_lib/curl_class.php");
 // required for handling ini-file
 require_once("ws_lib/inifile_class.php");
@@ -13,7 +34,8 @@ require_once("ws_lib/verbose_class.php");
 
 // initialize openscan_server
 $server = openscan_server::get_instance("openscan.ini");
-$server->start();
+// handle the request
+$server->handle_request();
 
 /**
  * The server class for OpenScan webservice. Class is implemented as singleton instance.
@@ -40,50 +62,112 @@ class openscan_server
     // set verbose for logging
     $this->verbose= new verbose($this->config->get_value("logfile", "setup"),$this->config->get_value("verbose", "setup"));
    
-    
+    // remember to disable caching of wsdl while developing - if not you can get some VERY confusing
+    // results when doing soap-requests; enable caching when in production
     ini_set('soap.wsdl_cache_enabled',0); 
   }  
-
-  public function start()
+ 
+  /**
+   * Handle the request according to parameters set by client  
+   */
+  public function handle_request()
   {
-    $this->handle_request();
-  }
-
-  private function handle_request()
-  {
-    // get value to scan for. jquery autocomplete-plugin hardcodes the value passed as 'q'
-      
     if( isset($_GET["q"]) )
       {
-	$this->j_query($_GET["q"]);    
+	$this->j_query($_GET["q"]); 
+	return;
       }
     elseif( isset($_GET["HowRU"]) )
       {
 	$this->HowRU();
+	return;
       }
     elseif( isset($GLOBALS['HTTP_RAW_POST_DATA']) )
       {  	
-	$this->soap_request();     
+	$this->soap_request(); 
+	return;
       }       
-    elseif( isset($_SERVER['QUERY_STRING']) )
+    elseif( !empty($_SERVER['QUERY_STRING']) )
       {
-        $this->rest_request();
-      }
-    elseif( isset($_GET['callback']) )
-      {
-	// TODO handle callback
+        $response = $this->rest_request();
       }
     else // no valid request was made; generate an error
       {
-	// make a nice response to be polite
-	$response=new scanResponse();
-	$response->error =xml_func::UTF8("Please give me something to scan for like: ?field=title&limit=10&lower=harry");
-	header('Content-type:text/xml;charset=UTF-8');
-	echo  xml_func::object_to_xml($response);	
+	$this->send_error();
+	return;
       }
 
+    // if we get to this point request was REST; all other cases return.
+    if( isset($response) )
+      {
+	$this->handle_response($response);
+	return;
+      }
+    else
+      {
+	$this->send_error();
+      }
   }
 
+  /**
+   * Make a response with an error
+   * @param message; The message to send as error
+   * @return; echoes scanResponse-object as xml.
+   */
+  private function send_error($message=null)
+  {
+    // make a nice response to be polite
+    $response=new scanResponse();
+    // set default message
+    if( !isset($message) )
+      $message = "Please give me something to scan for like: ?field=title&limit=10&lower=harry&outputType=XML";
+
+    $response->error =xml_func::UTF8($message);
+    // return message as xml
+    header('Content-type:text/xml;charset=UTF-8');
+    echo  xml_func::object_to_xml($response);   
+  }
+
+  /**
+   * Handle the response according to outputType and callback parameters given by client  
+   * @param response; the response to handle
+   * @return; echoes the response
+   */
+  private function handle_response($response)
+  { 
+    // get outputtype
+    $type = $_GET['outputType'];
+    // callback 
+    $callback = $_GET['callback'];
+
+    // set default type (XML)
+    if( empty($type) )
+      $type = "XML";
+
+    // lowercase type variable to be nice
+    $type = strtolower($type);
+
+    switch($type)
+      {
+      case "xml":
+	header('Content-type:text/xml;charset=UTF-8');
+	echo  xml_func::object_to_xml($response);
+	break;
+      case "json":
+	if( empty($callback) )
+	  echo json_encode($response);
+	else
+	  echo "&& ".json_encode($response)." &&";
+	break;	
+      default:
+	$this->send_error("Please give me correct outputtype: XML or JSON");
+	break;
+      }       
+  }
+
+  /**
+   * HowRU function makes a test request from parameters in ini-file.
+   */
   protected function HowRU()
   {
     // get test parmaeters from config-file
@@ -95,17 +179,21 @@ class openscan_server
     if( $response = $this->openScan($request) )
       echo 'great';
     else
-      echo 'not to good, i got an error from openScan-function';
+      echo 'not too good, i got an error from openScan-function';
   }
 
+  /**
+   * J-query autocomplete plugin hardcodes searchparameter as 'q'. Make a response the J-query way
+   * @param $q ; The term to scan for
+   * @return nothing, echoes result for j-query
+   */
   private function j_query($q)
   {
     ////////////////
     // For JQUERY //
     ////////////////
     
-    // set url for request
-    // TODO it must be possible to pass parameter such as limit and field in jquery. For now they are hardcoded
+    // TODO it must be possible to pass parameters such as limit and field for jquery. For now they are hardcoded
     
     $url=$this->config->get_value("baseurl","setup")."&terms.fl=dc.title&terms.lower=".$q."&terms.prefix=".$q."&limit=10";
     
@@ -120,9 +208,15 @@ class openscan_server
     // iterate results
     if( $nodelist->length >= 1 )
       foreach($nodelist as $node)
-	echo $node->getAttribute('name')."|".$node->nodeValue."\n";
+	{
+	  // echo the j-query way e.g name|value
+	  echo $node->getAttribute('name')."|".$node->nodeValue."\n";
+	}
   }
 
+  /** Handle url-driven requests (REST)
+   *  @return response; response mapped to scanResponse-object 
+   */
   protected function rest_request()
   {   
     //////////////
@@ -145,11 +239,13 @@ class openscan_server
       }
     // map xml to object    
     $response = $this->parse_response($xml);
-    // print object as xml
-    header('Content-type:text/xml;charset=UTF-8');
-    echo  xml_func::object_to_xml($response);
+
+    return $response;   
   }
 
+  /**
+   * Use php soap-extension to handle the soaprequest  
+   */
   protected function soap_request()
   {
 
@@ -163,21 +259,28 @@ class openscan_server
     $soap_server->handle();
   }
 
-  /** function for handling soap-request */
+  /** Function for handling soap-request 
+   *  @param request; The request mapped to scanRequest-object
+   *  @return response; Response mapped to scanResponse-object, false if something went wrong
+   */
   public function openScan($request)
   {
     // make an url for request
-    if( ! $url=$this->config->get_value("baseurl","setup").$this->get_query($request) )
+    if( !$query=$this->get_query($request) )
       {
-	// TODO errorhandling
+	$this->verbose->log(WARNING,"openScan:224::could not set query for solr");
 	return false;
       }
-    $xml=$this->get_xml($url,$statuscode);
+
+    $url=$this->config->get_value("baseurl","setup").$query;
+	  
+    if( !$xml=$this->get_xml($url,$statuscode) )
+      return false;
 
     if( $statuscode != 200 )   
       { 
 	// TODO log xml with verbose
-	echo $xml;
+	$this->verbose->log(WARNING,"openScan:234::HTTP-errorcode from solr:".$statuscode);
 	return false;
       }
     
@@ -189,12 +292,21 @@ class openscan_server
   {
   }
 
-  /** return a list of nodes holding result from autocomplete-request*/
+  /** Return a list of nodes holding result from autocomplete-request
+   *  @param xml; The xml to get nodelist from
+   *  @return nodelist; A list of nodes holding result; false if something went wrong
+   */
   private function get_nodelist(&$xml)
   {
     // parse the result
     $dom = new DOMDocument('1.0', 'UTF-8');
-    $dom->LoadXML($xml);
+    
+    if (!$dom->LoadXML($xml) )
+    {
+      $this->verbose->log(WARNING,"get_nodelist:255::Could not load XML");
+      return false;
+    }    
+    
     $xpath=new DOMXPath($dom);
     $query="/response/lst[@name='terms']/lst/int";
     $nodelist=$xpath->query($query);
@@ -202,11 +314,15 @@ class openscan_server
     return $nodelist;
   }
 
-  /** parse xml and map to scanResponse-object */
+  /** Parse xml and map to scanResponse-object 
+   *  @param xml; the xml to parse
+   *  @return response; xml mapped to scanResponse object.
+   */
   private function parse_response(&$xml)
   {
     $response = new scanResponse();
-    $nodelist=$this->get_nodelist($xml);
+    if( !$nodelist=$this->get_nodelist($xml) )
+      return false;
     
     foreach( $nodelist as $node )
       {
@@ -214,13 +330,16 @@ class openscan_server
 	$term->name=xml_func::UTF8($node->getAttribute("name"));
 	$term->hitCount= $node->nodeValue;
 	$response->term[]=$term;
-      }
-    
+      }    
     return $response;
   }
 
 
-  /** get xml from solr/autocomplete interface */
+  /** Get xml from solr/autocomplete interface. Set statuscode for remote-call 
+   *  @param url; url and query-parameters for solr-interface
+   *  @param statuscode; The statuscode to be set.
+   *  @return xml; The response from solr/autocomplete
+   */
   private function get_xml($url,&$statuscode)
   {
     // use curl class to retrieve results
@@ -231,7 +350,12 @@ class openscan_server
     
     return $xml;
   }
-  /** map rest-url for solr-request */
+
+  /** Map parameters in rest-url for solr-request 
+   *  e.g. field -> terms.fl, maxFrequence -> terms.maxcount etc.   
+   *  @param url; The request to map
+   *  @return ret; Given request mapped for solr/autocomplete interface
+   */
   private function map_url(&$url)
   {
     $prefix="terms.";
@@ -256,7 +380,7 @@ class openscan_server
 	  case "prefix":
 	    $ret.="&".$prefix."prefix=".$query[1];
 	    break;
-	  case "maxFrequence":
+	  case "maxFrequency":
 	    $ret.="&".$prefix."maxcount=".$query[1];
 	  break;
 	  case "minFrequency":
@@ -273,7 +397,10 @@ class openscan_server
     return $ret;
   } 
 
-  /** parse scanRequest-object and map to query-parameters */
+  /** Parse scanRequest-object and map to query-parameters 
+   *  @param request; scanRequest-object
+   *  @return ret; Given request mapped to url-parameters
+   */
   private function get_query($request)
   {
     $prefix="&terms.";

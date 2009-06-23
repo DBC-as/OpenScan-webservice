@@ -16,6 +16,7 @@
 				<xs:element ref="scan:prefix" minOccurs="0"/>
 				<xs:element ref="scan:upper" minOccurs="0"/>
 				<xs:element ref="scan:callback" minOccurs="0"/>
+				<xs:element ref="scan:outputType" minOccurs="0"/>
 			</xs:sequence>
 		</xs:complexType>
 	</xs:element>
@@ -37,7 +38,16 @@
 	<xs:element name="prefix" type="xs:string"/>
 	<xs:element name="upper" type="xs:string"/>
 	<xs:element name="callback" type="xs:string"/>
+	<xs:element name="outputType" type="scan:output"/>
 	<xs:element name="error" type="xs:string"/>
+
+	<xs:simpleType name="output">
+	  <xs:restriction base="xs:string">
+	    <xs:enumeration value="XML"/>
+	    <xs:enumeration value="JSON"/>
+	  </xs:restriction>	  
+	</xs:simpleType>  
+	  
 	<xs:element name="term">
 		<xs:complexType>
 			<xs:sequence>
