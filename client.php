@@ -96,7 +96,6 @@ Ramme med SOAP resultat
     {return $e;}
     
     // for example purpose we simply return the raw xml.
-    // return $client->__getFunctions();
     return $client->__getLastResponse();
   }
 ?>

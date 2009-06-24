@@ -30,30 +30,26 @@ require_once("scanService_classes.php");
 require_once("ws_lib/xml_func_class.php");
 // required for logging
 require_once("ws_lib/verbose_class.php");
+// required for timing
+require_once("ws_lib/timer_class.php");
 
 
 // initialize openscan_server
-$server = openscan_server::get_instance("openscan.ini");
+$server = new openscan_server("openscan.ini");
 // handle the request
 $server->handle_request();
 
 /**
- * The server class for OpenScan webservice. Class is implemented as singleton instance.
+ * The server class for OpenScan webservice. 
  */
 class openscan_server
 {
-  private static $instance;
   private $config;
   private $verbose;
+  private $watch;
 
-  public static function get_instance($inifile)
-  {
-    if( !isset($instance) )
-      $instance = new openscan_server($inifile);
-    return $instance;
-  }
-
-  private function __construct($inifile)
+ 
+  public function __construct($inifile)
   {
     // get cofiguration
     $this->config=new inifile($inifile);
@@ -61,11 +57,22 @@ class openscan_server
       die( "could not initialize configuration" );
     // set verbose for logging
     $this->verbose= new verbose($this->config->get_value("logfile", "setup"),$this->config->get_value("verbose", "setup"));
+
+    $this->watch = new stopwatch("", " ", "", "%s:%01.3f");
+    $this->watch->start('openscan');
    
     // remember to disable caching of wsdl while developing - if not you can get some VERY confusing
     // results when doing soap-requests; enable caching when in production
     ini_set('soap.wsdl_cache_enabled',0); 
   }  
+
+  public function __destruct()
+  {
+     // stop the watch
+    $this->watch->stop('openscan');
+    // and do the logging
+    $this->verbose->log(TIMER, $this->watch->dump());    
+  }
  
   /**
    * Handle the request according to parameters set by client  
@@ -106,6 +113,7 @@ class openscan_server
     else
       {
 	$this->send_error();
+	return;
       }
   }
 
@@ -288,9 +296,7 @@ class openscan_server
     return $response;  
     }
 
-  protected function callback()
-  {
-  }
+
 
   /** Return a list of nodes holding result from autocomplete-request
    *  @param xml; The xml to get nodelist from
@@ -390,8 +396,7 @@ class openscan_server
 	    $ret.="&".$prefix."upper=".$query[1];
 	    break;
 	  default:
-	    break;
-	    
+	    break;	    
 	  }
       }
     return $ret;
