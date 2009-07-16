@@ -1,11 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<?xml-stylesheet type="text/xsl" href="xsd_html.xsl"?>
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:scan="http://oss.dbc.dk/ns/openscan" targetNamespace="http://oss.dbc.dk/ns/openscan" elementFormDefault="qualified">
 	<xs:annotation>
 		<xs:documentation xml:lang="eng">Openscan Service</xs:documentation>
 		<xs:documentation xml:lang="eng">This XML Schema describes the data and structure of data of the Opensearch scan service.</xs:documentation>
 	</xs:annotation>
 	<xs:element name="scanRequest">
+		<xs:annotation>
+			<xs:documentation xml:lang="eng">The service request.</xs:documentation>
+		</xs:annotation>
 		<xs:complexType>
 			<xs:sequence>
 				<xs:element ref="scan:field"/>
@@ -21,34 +23,81 @@
 		</xs:complexType>
 	</xs:element>
 	<xs:element name="scanResponse">
+		<xs:annotation>
+			<xs:documentation xml:lang="eng">The service response.</xs:documentation>
+		</xs:annotation>
 		<xs:complexType>
 			<xs:sequence>
 				<xs:element ref="scan:term" minOccurs="0" maxOccurs="unbounded"/>
-				<xs:element ref="scan:error" minOccurs="0" />
+				<xs:element ref="scan:error" minOccurs="0"/>
 			</xs:sequence>
 		</xs:complexType>
 	</xs:element>
-	<xs:element name="field" type="scan:fieldType"/>
-	<xs:element name="hitCount" type="xs:string"/>
-	<xs:element name="limit" type="xs:integer"/>
-	<xs:element name="lower" type="xs:string"/>
-	<xs:element name="maxFrequency" type="xs:integer"/>
-	<xs:element name="minFrequency" type="xs:integer"/>
-	<xs:element name="name" type="xs:string"/>
+	<xs:element name="field" type="scan:fieldType">
+		<xs:annotation>
+			<xs:documentation xml:lang="eng">The field to be scanned.</xs:documentation>
+		</xs:annotation>
+	</xs:element>
+	<xs:element name="hitCount" type="xs:string">
+		<xs:annotation>
+			<xs:documentation xml:lang="eng">Number of hits for a specific term (phrase).</xs:documentation>
+		</xs:annotation>
+	</xs:element>
+	<xs:element name="limit" type="xs:integer">
+		<xs:annotation>
+			<xs:documentation xml:lang="eng">The number of terms (phrases) to be returned by the service. </xs:documentation>
+		</xs:annotation>
+	</xs:element>
+	<xs:element name="lower" type="xs:string">
+		<xs:annotation>
+			<xs:documentation xml:lang="eng">The beginning of the scan term (phrase).</xs:documentation>
+		</xs:annotation>
+	</xs:element>
+	<xs:element name="maxFrequency" type="xs:integer">
+		<xs:annotation>
+			<xs:documentation xml:lang="eng">Maximum number of hits for a term (phrase) to be returned by the service.</xs:documentation>
+		</xs:annotation>
+	</xs:element>
+	<xs:element name="minFrequency" type="xs:integer">
+		<xs:annotation>
+			<xs:documentation xml:lang="eng">Minimum number of hits for a term (phrase) to be returned by the service.</xs:documentation>
+		</xs:annotation>
+	</xs:element>
+	<xs:element name="name" type="xs:string">
+		<xs:annotation>
+			<xs:documentation xml:lang="eng">The specific term (phrase) returned by the service.</xs:documentation>
+		</xs:annotation>
+	</xs:element>
 	<xs:element name="prefix" type="xs:string"/>
 	<xs:element name="upper" type="xs:string"/>
-	<xs:element name="callback" type="xs:string"/>
-	<xs:element name="outputType" type="scan:output"/>
-	<xs:element name="error" type="xs:string"/>
-
-	<xs:simpleType name="output">
-	  <xs:restriction base="xs:string">
-	    <xs:enumeration value="XML"/>
-	    <xs:enumeration value="JSON"/>
-	  </xs:restriction>	  
-	</xs:simpleType>  
-	  
+	<xs:element name="callback" type="xs:string">
+		<xs:annotation>
+			<xs:documentation xml:lang="eng">If outputType=json.</xs:documentation>
+		</xs:annotation>
+	</xs:element>
+	<xs:element name="outputType" type="scan:outputTypeType">
+		<xs:annotation>
+			<xs:documentation xml:lang="eng">Choice of output, default is XML.</xs:documentation>
+		</xs:annotation>
+	</xs:element>
+	<xs:element name="error" type="xs:string">
+		<xs:annotation>
+			<xs:documentation xml:lang="eng">Message returned by the service, if an error occurs.</xs:documentation>
+		</xs:annotation>
+	</xs:element>
+	<xs:simpleType name="outputTypeType">
+		<xs:annotation>
+			<xs:documentation xml:lang="eng">The types of output that can be returned by the service.</xs:documentation>
+		</xs:annotation>
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="XML"/>
+			<xs:enumeration value="JSON"/>
+		</xs:restriction>
+	</xs:simpleType>
 	<xs:element name="term">
+		<xs:annotation>
+			<xs:documentation xml:lang="eng">Term (Phrase) returned by the service and number of hits.</xs:documentation>
+		</xs:annotation>
 		<xs:complexType>
 			<xs:sequence>
 				<xs:element ref="scan:name"/>
@@ -57,38 +106,20 @@
 		</xs:complexType>
 	</xs:element>
 	<xs:simpleType name="fieldType">
+		<xs:annotation>
+			<xs:documentation xml:lang="eng">The fields that can be scanned through this service.</xs:documentation>
+		</xs:annotation>
 		<xs:restriction base="xs:string">
-			<xs:enumeration value="dc.title"/>
-			<xs:enumeration value="dc.creator"/>
-			<xs:enumeration value="dc.description"/>
-			<xs:enumeration value="dc.subject"/>
-			<xs:enumeration value="dc.type"/>
-			<xs:enumeration value="dc.language"/>
-			<xs:enumeration value="dc.date"/>
-			<xs:enumeration value="dc.source"/>
-			<xs:enumeration value="dc.publisher"/>
-			<xs:enumeration value="dc.contributor"/>
-			<xs:enumeration value="dc.format"/>
-			<xs:enumeration value="dc.identifier"/>
-			<xs:enumeration value="dc.relation"/>
-			<xs:enumeration value="dc.coverage"/>
-			<xs:enumeration value="dc.rights"/>
-			
-			<xs:enumeration value="title"/>
-			<xs:enumeration value="creator"/>
-			<xs:enumeration value="description"/>
-			<xs:enumeration value="subject"/>
-			<xs:enumeration value="type"/>
-			<xs:enumeration value="language"/>
-			<xs:enumeration value="date"/>
-			<xs:enumeration value="source"/>
-			<xs:enumeration value="publisher"/>
-			<xs:enumeration value="contributor"/>
-			<xs:enumeration value="format"/>
-			<xs:enumeration value="identifier"/>
-			<xs:enumeration value="relation"/>
-			<xs:enumeration value="coverage"/>
-			<xs:enumeration value="rights"/>
+			<xs:enumeration value="phrase.title"/>
+			<xs:enumeration value="phrase.creator"/>
+			<xs:enumeration value="phrase.description"/>
+			<xs:enumeration value="phrase.subject"/>
+			<xs:enumeration value="phrase.type"/>
+			<xs:enumeration value="phrase.language"/>
+			<xs:enumeration value="phrase.date"/>
+			<xs:enumeration value="phrase.source"/>
+			<xs:enumeration value="phrase.identifier"/>
+			<xs:enumeration value="phrase.anyIndexes"/>
 		</xs:restriction>
 	</xs:simpleType>
 </xs:schema>
