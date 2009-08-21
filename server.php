@@ -100,8 +100,11 @@ class openscan_server
       }
     else // no valid request was made; generate an error
       {
-	$this->send_error();
-	return;
+	Header( "HTTP/1.1 303 See Other" );
+	Header( "Location: client.php" ); 
+	exit;
+	//$this->send_error();
+	//return;
       }
 
     // if we get to this point request was REST; all other cases return.
@@ -203,8 +206,8 @@ class openscan_server
     
     // TODO it must be possible to pass parameters such as limit and field for jquery. For now they are hardcoded
     
-    $url=$this->config->get_value("baseurl","setup")."&terms.fl=dc.title&terms.lower=".$q."&terms.prefix=".$q."&limit=10";
-    
+    // $url=$this->config->get_value("baseurl","setup")."&terms.fl=creator&terms.lower=".$q."&terms.prefix=".$q."&limit=10";
+     $url=$this->config->get_value("baseurl","setup")."&terms.fl=creator&terms.lower=".$q."&terms.prefix=".$q."&limit=10";
     $xml=$this->get_xml($url,$statuscode);
     if( $statuscode != 200 )
       {
@@ -351,6 +354,7 @@ class openscan_server
     // use curl class to retrieve results
     $curl=new curl();
     $curl->set_url($url);
+    // TODO errorcheck
     $xml=$curl->get();
     $statuscode=$curl->get_status('http_code');
     
