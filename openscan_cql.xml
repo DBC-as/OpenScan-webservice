@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<explain xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://explain.z3950.org/dtd/2.0/ http://explain.z3950.org/dtd/zeerex-2.0.xsd" xmlns="http://explain.z3950.org/dtd/2.0/">
+	<serverInfo>
+		<host/>
+		<port/>
+		<database/>
+	</serverInfo>
+	<indexInfo>
+		<set identifier="http://oss.dbc.dk/ns/phrase" name="phrase"/>
+
+		<index>
+			<title lang="da">Ophav (frase)</title>
+			<title lang="en">Creator (phrase)</title>
+			<map>
+				<name set="phrase">creator</name>
+			</map>
+		</index>
+		<index>
+			<title lang="da">Titel (frase)</title>
+			<title lang="en">Title (phrase)</title>
+			<map>
+				<name set="phrase">title</name>
+			</map>
+		</index>
+		<index>
+			<title lang="da">Beskrivelse (frase)</title>
+			<title lang="en">Description (phrase)</title>
+			<map>
+				<name set="phrase">description</name>
+			</map>
+		</index>
+		<index>
+			<title lang="da">Emne (frase)</title>
+			<title lang="en">Subject (phrase)</title>
+			<map>
+				<name set="phrase">subject</name>
+			</map>
+		</index>
+		<index>
+			<title lang="da">Materialetype (frase)</title>
+			<title lang="en">Type of material (phrase)</title>
+			<map>
+				<name set="phrase">type</name>
+			</map>
+		</index>
+		<index>
+			<title lang="da">Sprog (frase)</title>
+			<title lang="en">Language (phrase)</title>
+			<map>
+				<name set="phrase">language</name>
+			</map>
+		</index>
+		<index>
+			<title lang="da">År (frase)</title>
+			<title lang="en">Year (phrase)</title>
+			<map>
+				<name set="phrase">date</name>
+			</map>
+		</index>
+		<index>
+			<title lang="da">Kilde (frase)</title>
+			<title lang="en">Source (phrase)</title>
+			<map>
+				<name set="phrase">source</name>
+			</map>
+		</index>
+		<index>
+			<title lang="da">Udgiver (frase)</title>
+			<title lang="en">Publisher (phrase)</title>
+			<map>
+				<name set="phrase">publisher</name>
+			</map>
+		</index>
+				<index>
+			<title lang="da">Fritekst (frase)</title>
+			<title lang="en">Full text (phrase)</title>
+			<map>
+				<name set="phrase">anyIndexes</name>
+			</map>
+		</index>
+		<index>
+			<title lang="da">Id-nummer</title>
+			<title lang="en">Identifier (phrase)</title>
+			<map>
+				<name set="phrase">identifier</name>
+			</map>
+		</index>
+
+	</indexInfo>
+</explain>
