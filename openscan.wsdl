@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<wsdl:definitions name="scanDefinition" xmlns:xs="http://www.w3.org/2001/XMLSchema" targetNamespace="http://oss.dbc.dk/ns/openscan_wsdl" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:types="http://oss.dbc.dk/ns/openscan" xmlns:tns="http://oss.dbc.dk/ns/openscan_wsdl">
+	<wsdl:types>
+		<xs:schema elementFormDefault="qualified">
+			<xs:import namespace="http://oss.dbc.dk/ns/openscan" schemaLocation="openscan.xsd"/>
+		</xs:schema>
+	</wsdl:types>
+	<wsdl:message name="scanRequest">
+		<wsdl:part name="input" element="types:scanRequest"/>
+	</wsdl:message>
+	<wsdl:message name="scanResponse">
+		<wsdl:part name="output" element="types:scanResponse"/>
+	</wsdl:message>
+	<wsdl:portType name="scanPortType">
+		<wsdl:operation name="openScan">
+			<wsdl:input message="tns:scanRequest"/>
+			<wsdl:output message="tns:scanResponse"/>
+		</wsdl:operation>
+	</wsdl:portType>
+	<wsdl:binding name="scanBinding" type="tns:scanPortType">
+		<soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+		<wsdl:operation name="openScan">
+			<soap:operation soapAction="openScan"/>
+			<wsdl:input>
+				<soap:body use="literal"/>
+			</wsdl:input>
+			<wsdl:output>
+				<soap:body use="literal"/>
+			</wsdl:output>
+		</wsdl:operation>
+	</wsdl:binding>
+	<wsdl:service name="scanService">
+		<wsdl:port name="scanPort" binding="tns:scanBinding">
+			<soap:address location="http://vision.dbc.dk/~pjo/OpenLibrary/OpenScan/trunk/server.php"/>
+		</wsdl:port>
+	</wsdl:service>
+</wsdl:definitions>
