@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:scan="http://oss.dbc.dk/ns/openscan" targetNamespace="http://oss.dbc.dk/ns/openscan" elementFormDefault="qualified">
 	<xs:annotation>
-		<xs:documentation xml:lang="eng">Openscan Service</xs:documentation>
-		<xs:documentation xml:lang="eng">This XML Schema describes the data and structure of data of the Opensearch scan service.</xs:documentation>
-		<xs:documentation xml:lang="eng">This file is part of OpenSearch.
+		<xs:documentation xml:lang="en">Openscan Service</xs:documentation>
+		<xs:documentation xml:lang="en">This XML Schema describes the data and structure of data of the Opensearch scan service.</xs:documentation>
+		<xs:documentation xml:lang="en">This file is part of OpenSearch.
 Copyright © 2009, Dansk Bibliotekscenter a/s,  Tempovej 7-11, DK-2750 Ballerup, Denmark. CVR: 15149043
 
 OpenSearch is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
@@ -14,7 +14,7 @@ You should have received a copy of the GNU Affero General Public License along w
 	</xs:annotation>
 	<xs:element name="scanRequest">
 		<xs:annotation>
-			<xs:documentation xml:lang="eng">The service request.</xs:documentation>
+			<xs:documentation xml:lang="en">The service request.</xs:documentation>
 		</xs:annotation>
 		<xs:complexType>
 			<xs:sequence>
@@ -32,7 +32,7 @@ You should have received a copy of the GNU Affero General Public License along w
 	</xs:element>
 	<xs:element name="scanResponse">
 		<xs:annotation>
-			<xs:documentation xml:lang="eng">The service response.</xs:documentation>
+			<xs:documentation xml:lang="en">The service response.</xs:documentation>
 		</xs:annotation>
 		<xs:complexType>
 			<xs:sequence>
@@ -43,59 +43,59 @@ You should have received a copy of the GNU Affero General Public License along w
 	</xs:element>
 	<xs:element name="field" type="scan:fieldType">
 		<xs:annotation>
-			<xs:documentation xml:lang="eng">The field to be scanned.</xs:documentation>
+			<xs:documentation xml:lang="en">The field to be scanned.</xs:documentation>
 		</xs:annotation>
 	</xs:element>
 	<xs:element name="hitCount" type="xs:string">
 		<xs:annotation>
-			<xs:documentation xml:lang="eng">Number of hits for a specific term (phrase).</xs:documentation>
+			<xs:documentation xml:lang="en">Number of hits for a specific term (phrase).</xs:documentation>
 		</xs:annotation>
 	</xs:element>
 	<xs:element name="limit" type="xs:integer">
 		<xs:annotation>
-			<xs:documentation xml:lang="eng">The number of terms (phrases) to be returned by the service. </xs:documentation>
+			<xs:documentation xml:lang="en">The number of terms (phrases) to be returned by the service. </xs:documentation>
 		</xs:annotation>
 	</xs:element>
 	<xs:element name="lower" type="xs:string">
 		<xs:annotation>
-			<xs:documentation xml:lang="eng">The beginning of the scan term (phrase).</xs:documentation>
+			<xs:documentation xml:lang="en">The beginning of the scan term (phrase).</xs:documentation>
 		</xs:annotation>
 	</xs:element>
 	<xs:element name="maxFrequency" type="xs:integer">
 		<xs:annotation>
-			<xs:documentation xml:lang="eng">Maximum number of hits for a term (phrase) to be returned by the service.</xs:documentation>
+			<xs:documentation xml:lang="en">Maximum number of hits for a term (phrase) to be returned by the service.</xs:documentation>
 		</xs:annotation>
 	</xs:element>
 	<xs:element name="minFrequency" type="xs:integer">
 		<xs:annotation>
-			<xs:documentation xml:lang="eng">Minimum number of hits for a term (phrase) to be returned by the service.</xs:documentation>
+			<xs:documentation xml:lang="en">Minimum number of hits for a term (phrase) to be returned by the service.</xs:documentation>
 		</xs:annotation>
 	</xs:element>
 	<xs:element name="name" type="xs:string">
 		<xs:annotation>
-			<xs:documentation xml:lang="eng">The specific term (phrase) returned by the service.</xs:documentation>
+			<xs:documentation xml:lang="en">The specific term (phrase) returned by the service.</xs:documentation>
 		</xs:annotation>
 	</xs:element>
 	<xs:element name="prefix" type="xs:string"/>
 	<xs:element name="upper" type="xs:string"/>
 	<xs:element name="callback" type="xs:string">
 		<xs:annotation>
-			<xs:documentation xml:lang="eng">If outputType=json.</xs:documentation>
+			<xs:documentation xml:lang="en">If outputType=json.</xs:documentation>
 		</xs:annotation>
 	</xs:element>
 	<xs:element name="outputType" type="scan:outputTypeType">
 		<xs:annotation>
-			<xs:documentation xml:lang="eng">Choice of output, default is XML.</xs:documentation>
+			<xs:documentation xml:lang="en">Choice of output, default is XML.</xs:documentation>
 		</xs:annotation>
 	</xs:element>
 	<xs:element name="error" type="xs:string">
 		<xs:annotation>
-			<xs:documentation xml:lang="eng">Message returned by the service, if an error occurs.</xs:documentation>
+			<xs:documentation xml:lang="en">Message returned by the service, if an error occurs.</xs:documentation>
 		</xs:annotation>
 	</xs:element>
 	<xs:simpleType name="outputTypeType">
 		<xs:annotation>
-			<xs:documentation xml:lang="eng">The types of output that can be returned by the service.</xs:documentation>
+			<xs:documentation xml:lang="en">The types of output that can be returned by the service.</xs:documentation>
 		</xs:annotation>
 		<xs:restriction base="xs:string">
 			<xs:enumeration value="XML"/>
@@ -104,7 +104,7 @@ You should have received a copy of the GNU Affero General Public License along w
 	</xs:simpleType>
 	<xs:element name="term">
 		<xs:annotation>
-			<xs:documentation xml:lang="eng">Term (Phrase) returned by the service and number of hits.</xs:documentation>
+			<xs:documentation xml:lang="en">Term (Phrase) returned by the service and number of hits.</xs:documentation>
 		</xs:annotation>
 		<xs:complexType>
 			<xs:sequence>
@@ -115,7 +115,7 @@ You should have received a copy of the GNU Affero General Public License along w
 	</xs:element>
 	<xs:simpleType name="fieldType">
 		<xs:annotation>
-			<xs:documentation xml:lang="eng">The fields that can be scanned through this service.</xs:documentation>
+			<xs:documentation xml:lang="en">The fields that can be scanned through this service.</xs:documentation>
 		</xs:annotation>
 		<xs:restriction base="xs:string">
 			<xs:enumeration value="phrase.title"/>
