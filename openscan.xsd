@@ -18,6 +18,7 @@ You should have received a copy of the GNU Affero General Public License along w
 		</xs:annotation>
 		<xs:complexType>
 			<xs:sequence>
+				<xs:element ref="scan:authentication" minOccurs="0"/>
 				<xs:element ref="scan:field"/>
 				<xs:element ref="scan:limit"/>
 				<xs:element ref="scan:lower" minOccurs="0"/>
@@ -41,9 +42,26 @@ You should have received a copy of the GNU Affero General Public License along w
 			</xs:sequence>
 		</xs:complexType>
 	</xs:element>
+	<xs:element name="authentication">
+		<xs:annotation>
+			<xs:documentation xml:lang="en">Parameters used for authentication purposes</xs:documentation>
+		</xs:annotation>
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="scan:userIdAut"/>
+				<xs:element ref="scan:groupIdAut"/>
+				<xs:element ref="scan:passwordAut"/>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
 	<xs:element name="field" type="scan:fieldType">
 		<xs:annotation>
 			<xs:documentation xml:lang="en">The field to be scanned.</xs:documentation>
+		</xs:annotation>
+	</xs:element>
+	<xs:element name="groupIdAut">
+		<xs:annotation>
+			<xs:documentation xml:lang="en">Identifier of the group (most often a library number) the user belongs to (for authentication purposes)</xs:documentation>
 		</xs:annotation>
 	</xs:element>
 	<xs:element name="hitCount" type="xs:string">
@@ -76,8 +94,18 @@ You should have received a copy of the GNU Affero General Public License along w
 			<xs:documentation xml:lang="en">The specific term (phrase) returned by the service.</xs:documentation>
 		</xs:annotation>
 	</xs:element>
+	<xs:element name="passwordAut">
+		<xs:annotation>
+			<xs:documentation xml:lang="en">Password (for authentication purposes)</xs:documentation>
+		</xs:annotation>
+	</xs:element>
 	<xs:element name="prefix" type="xs:string"/>
 	<xs:element name="upper" type="xs:string"/>
+	<xs:element name="userIdAut">
+		<xs:annotation>
+			<xs:documentation xml:lang="en">User identifier (for authentication purposes)</xs:documentation>
+		</xs:annotation>
+	</xs:element>
 	<xs:element name="callback" type="xs:string">
 		<xs:annotation>
 			<xs:documentation xml:lang="en">If outputType=json.</xs:documentation>
