@@ -2,16 +2,17 @@
 
 require_once("OLS_class_lib/webServiceServer_class.php");
 // required for making remote calls
-require_once("OLS_class_lib/curl_class.php");
+// require_once("OLS_class_lib/curl_class.php");
 // required for handling xml
 require_once("OLS_class_lib/xml_func_class.php");
 // required for caching
-require_once("OLS_class_lib/cache_client_class.php");
+//require_once("OLS_class_lib/cache_client_class.php");
 
 
 class openscan_server extends webServiceServer 
 {
   private static $xsd=null;
+  public static $fields=array();
 
   public function __construct($inifile,$schema=null)
   {
@@ -25,22 +26,32 @@ class openscan_server extends webServiceServer
 	    self::$xsd=new DOMXPath($dom);
 	  }
       }
-    parent::__construct($inifile);    
+    
+    parent::__construct($inifile); 
+    if( empty($fields) )
+      self::$fields=$this->config->get_value("fields","setup");
+   
+  }
+
+  public function __destruct()
+  {
+    $this->watch->stop("base_class");
   }
  
   public function openScan($params)
   {
-    //if( !$terms= $this->terms($params) )
-    //  $terms = methods::openscan_request($params,$this->config,$this->verbose);
-    
     $terms=$this->terms($params);
    
-    foreach( $terms as $term )
-      {
-        $response_xmlobj->scanResponse->_namespace="http://oss.dbc.dk/ns/openscan";
-        $response_xmlobj->scanResponse->_value->term[]=$term;
-      }
-
+    $this->watch->start("parse");
+    if( $terms )
+      foreach( $terms as $term )
+	{
+	  $response_xmlobj->scanResponse->_namespace="http://oss.dbc.dk/ns/openscan";
+	  $response_xmlobj->scanResponse->_value->term[]=$term;
+	}
+    $this->watch->stop("parse");
+    
+    $this->watch->start("base_class");
     return $response_xmlobj;
   }
 
@@ -56,45 +67,16 @@ class openscan_server extends webServiceServer
     die();
   }
 
-  public static function fields()
-  {
-    $query="//xs:simpleType[@name='fieldType']/xs:restriction/xs:enumeration";
-
-     if( $data=cache::get($query) )
-       {
-	 return $data;
-       }
-
-    $nodelist=self::$xsd->query($query);
-    //    echo $nodelist->length;
-    $fields=array();
-    foreach( $nodelist as $node )
-      $fields[]=$node->getAttribute("value");
-    
-    cache::set($query,$fields);
-    
-    return $fields;
-  }
-
   private function terms($params)
   {
-    $key=methods::cache_key($params);
-    $log=new cache_log("openscan");	
-    if( $data=cache::get($key) )
-      {
-	$log->hit();
-	return $data;
-      }
-    $log->miss();
-
-    $data = methods::openscan_request($params,$this->config,$this->verbose);
-
-    cache::set($key,$data);
+    $this->watch->start("solr");
+    $data = methods::openscan_request($params,$this->config);
+    $this->watch->stop("solr");
     return $data;    
   }
 }
 
-$server=new openscan_server("openscan.ini","openscan.xsd");
+$server=new openscan_server("openscan.ini");
 $server->handle_request();
 
 class methods
@@ -115,27 +97,23 @@ class methods
    *  @param params; The request mapped to params-object
    *  @return response;an array of terms, false if something went wrong
    */
-  public static function openscan_request($params,$config=null,$verbose=null)
+  public static function openscan_request($params,$config=null)
   {
-    $fields=openscan_server::fields();
-    //    print_r($hest);
-    //exit;
-
+    // $fields=openscan_server::$fields;
+  
     // make an url for request
-    if( !$query=self::get_query($params,$fields) )
+    if( !$query=self::get_query($params) )//,$fields) )
       {
-	if( $verbose )
-	  $verbose->log(WARNING,"openScan:224::could not set query for solr");
+	verbose::log(WARNING,"openScan:224::could not set query for solr");
 	return false;
       }
 
     $url=$config->get_value("baseurl","setup").$query;
-
     $xml=self::get_xml($url,$statuscode);
+    
     if( $statuscode != 200 )   
       { 
-	if( $verbose )
-	  $verbose->log(WARNING,"openScan:234::HTTP-errorcode from solr:".$statuscode);
+	verbose::log(FATAL,"openscanRequest::HTTP-errorcode from solr:".$statuscode);
 	return false;
       }
 
@@ -151,7 +129,6 @@ class methods
     if( !$nodelist=self::get_nodelist($xml,$error) )
 	return false;
     
-    // TODO make term according to new webservice
     $terms=array();
     foreach( $nodelist as $node )
       {
@@ -160,13 +137,17 @@ class methods
     return $terms;
   }
 
+
+
   private static function get_term($node)
   {
-    $term->_namespace= "http://oss.dbc.dk/ns/openscan";
+    $namespace="http://oss.dbc.dk/ns/openscan";
+
+    $term->_namespace= $namespace;
     $term->_value->name->_value=xml_func::UTF8($node->getAttribute("name"));
-    $term->_value->name->_namespace="http://oss.dbc.dk/ns/openscan";
+    $term->_value->name->_namespace=$namespace;
     $term->_value->hitCount->_value=$node->nodeValue;
-    $term->_value->hitCount->_namespace="http://oss.dbc.dk/ns/openscan";
+    $term->_value->hitCount->_namespace=$namespace;
     return $term;
   }
    
@@ -182,7 +163,7 @@ class methods
     
     if (!$dom->LoadXML($xml) )
     {
-      $error="get_nodelist:97::Could not load XML";
+      $error="get_nodelist::Could not load XML";
       return false;
     }    
     
@@ -198,8 +179,11 @@ class methods
    *  @param params; params-object
    *  @return ret; given params mapped to url-parameters
    */
-  private static function get_query($params,$fields=null)
+  private static function get_query($params)
   {
+    // print_r($fields);
+    //exit;
+    
     $prefix="&terms.";
     // field and limit are the only required values 
     if( ! $field=$params->field->_value || ! $params->limit->_value )
@@ -208,10 +192,10 @@ class methods
     $field=$params->field->_value;
 
     // field check
-    if( $fields )
+    if( openscan_server::$fields )
       {
 	$flag=false;
-	foreach($fields as $key=>$val)
+	foreach( openscan_server::$fields as $key=>$val)
 	  if( $val==$field )
 	    {
 	      $flag=true;
@@ -224,7 +208,7 @@ class methods
     $ret.= $prefix."fl=".$params->field->_value;
     $ret.= $prefix."rows=".$params->limit->_value;
     
-    if( $lower=$params->lower->_value )
+    if( $lower=urlencode($params->lower->_value) )
       $ret.= $prefix."lower=".strtolower($lower);
 
     
@@ -256,7 +240,7 @@ class methods
     // use curl class to retrieve results
     $curl=new curl();
     $curl->set_url($url);
-  
+
     $xml=$curl->get();
     
     $statuscode=$curl->get_status('http_code');

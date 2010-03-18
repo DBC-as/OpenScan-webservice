@@ -7,7 +7,7 @@
  xmlns:xs="http://www.w3.org/2001/XMLSchema">
 <SOAP-ENV:Body>
 <scan:scanRequest>
-  <scan:field>creator</scan:field>
+  <scan:field>phrase.creator</scan:field>
   <scan:limit>10</scan:limit>
   <scan:lower>Haruki</scan:lower>
   <scan:outputType>xml</scan:outputType>
