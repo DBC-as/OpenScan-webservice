@@ -1,6 +1,7 @@
 ; Inifile for openscan                                                                                                
 
 [setup]
+version = 1.5
 
 ; wsdl for service
 wsdl = openscan.wsdl
