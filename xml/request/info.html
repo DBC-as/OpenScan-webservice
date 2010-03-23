@@ -1,47 +1,12 @@
-
-<html>
-<head>
-<script type="text/javascript" src="../../javascript/jquery.js"></script>
-<script type="text/javascript" src="../../javascript/jquery.autocomplete.js"></script>
-<link rel="stylesheet" type="text/css" href="autocomplete.css" />    
-
-<script type="text/javascript">
-function refresh(e)
-{
-  // capture the key pressed.. not used here, but could be useful for eg. pressing the escape key
-  if(!e)
-    var e=window.event;
-
-  var frame=document.getElementById("restframe");
-  var txt=document.getElementById("rest").value;
-
-  var src="http://vision.dbc.dk/~pjo/OpenLibrary/OpenScan/trunk/server.php?terms=true";
-  var query="field=dc.title&limit=10&lower="+txt+"&prefix="+txt;
-  var url=src+"&"+query;
-  frame.innerHTML="<iframe src="+url+" width='50%' height='300px' style='padding:5px'></iframe>";
- 
-}
-
-</script>
-<style>
-input[type=text]
-{
-display:block;
-margin:10px;
-
-}
-</style>
-</head>
-<body>
 <h2>Eksempel på brug af openscan web-service</h2>
 <p>
 Webservicen er beskrevet som wsdl. Du kan se definitionen (WSDL) <a href="openscan.wsdl">HER</a><br/>
   Du kan se skemadfinitionen (XSD) <a href="openscan.xsd">HER</a>
 <p>
 Her er nogle flere eksempler på url'er (åbner i nyt vindue)<br>
-<a target="_blank" href="http://didicas.dbc.dk/openscan/server.php?field=creator&amp;lower=Haruki&amp;limit=10&amp;outputType=XML">http://didicas.dbc.dk/openscan/server.php?field=creator&amp;lower=Haruki&amp;limit=10&amp;outputType=XML</a>
+<a target="_blank" href="?action=openScan&field=creator&lower=Haruki&limit=10&outputType=XML">?action=openScan&amp;field=creator&amp;lower=Haruki&amp;limit=10&amp;outputType=XML</a>
 <br>
-<a target="_blank" href="http://didicas.dbc.dk/openscan/server.php?field=dc.title&amp;lower=hest&amp;limit=10&amp;outputType=JSON">http://didicas.dbc.dk/openscan/server.php?field=dc.title&amp;lower=hest&amp;limit=5&amp;outputType=JSON</a>
+<a target="_blank" href="?action=openScan&field=dc.title&lower=hest&limit=10&outputType=json">?action=openScan&amp;field=dc.title&amp;lower=hest&amp;limit=5&amp;outputType=json</a>
 </p>
 <p>
 
@@ -50,6 +15,3 @@ Du kan se hvilke parametre du kan sætte i <a href="openscan.xsd">skemadefinitio
 <br>
 Det samme gælder for de andre parametre af fieldType.
 </p>
-</body>
-</html>
-
