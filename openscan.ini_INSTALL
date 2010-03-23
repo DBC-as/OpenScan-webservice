@@ -6,14 +6,20 @@ version = 1.5
 ; wsdl for service
 wsdl = openscan.wsdl
 
+; in_house_domain may use ?ShowInfo and use create_sample form
+;in_house_domain = .dbc.dk
+
+; set to TRUE to expose the create_sample form
+;show_samples = 1
+
 ; url to service
-ws_url = http://vision.dbc.dk/~pjo/OpenLibrary/OpenScan/temp/server.php
+ws_url = http://someserver.dk/
 
 ; actions
 soapAction[openScan]=scanRequest
 
 ; logfile for verbose output
-logfile = /tmp/nypunkt_pjo/openscan.log
+logfile = /tmp/openscan.log
 
 ; set verboselevel
 ;   WARNING - simple warnings
@@ -28,8 +34,7 @@ logfile = /tmp/nypunkt_pjo/openscan.log
 verbose = WARNING+ERROR+FATAL+STAT+TIMER+TRACE+DEBUG+Z3950+OCI
 
 ;url to solr-autocomplete interface
-;baseurl=http://andrus.dbc.dk:8080/apache-solr-nightly/autocomplete?terms=true
-baseurl=http://bola.dbc.dk:8080/apache-solr-nightly/autocomplete?terms=true
+baseurl=http://somesolr-server.dk:8080/apache-solr-nightly/autocomplete?terms=true
 
 xmlns[xml] = http://www.w3.org/XML/1998/namespace
 xmlns[tns] = http://oss.dbc.dk/ns/openscan_wsdl
@@ -43,16 +48,15 @@ xmldir = ./xml
 
 [rest]
 ; valid parameters for rest-request
-action[openScan][] = limit
 action[openScan][] = field
+action[openScan][] = limit
 action[openScan][] = lower
 action[openScan][] = minFrequency
 action[openScan][] = maxFrequency
 action[openScan][] = prefix
 action[openScan][] = upper
-
-action[ALL][] = outputType
-action[ALL][] = callback
+action[openScan][] = outputType
+action[openScan][] = callback
 
 
 [test]
