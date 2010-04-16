@@ -127,8 +127,9 @@ You should have received a copy of the GNU Affero General Public License along w
 			<xs:documentation xml:lang="en">The types of output that can be returned by the service.</xs:documentation>
 		</xs:annotation>
 		<xs:restriction base="xs:string">
-			<xs:enumeration value="XML"/>
-			<xs:enumeration value="JSON"/>
+      <xs:enumeration value="xml"/>
+      <xs:enumeration value="json"/>
+      <xs:enumeration value="php"/>
 		</xs:restriction>
 	</xs:simpleType>
 	<xs:element name="term">
