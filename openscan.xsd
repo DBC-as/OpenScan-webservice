@@ -37,10 +37,10 @@ You should have received a copy of the GNU Affero General Public License along w
 			<xs:documentation xml:lang="en">The service response.</xs:documentation>
 		</xs:annotation>
 		<xs:complexType>
-			<xs:sequence>
-				<xs:element ref="scan:term" minOccurs="0" maxOccurs="unbounded"/>
-				<xs:element ref="scan:error" minOccurs="0"/>
-			</xs:sequence>
+			<xs:choice>
+				<xs:element ref="scan:term" maxOccurs="unbounded"/>
+				<xs:element ref="scan:error"/>
+			</xs:choice>
 		</xs:complexType>
 	</xs:element>
 	<xs:element name="authentication">
@@ -117,21 +117,11 @@ You should have received a copy of the GNU Affero General Public License along w
 			<xs:documentation xml:lang="en">Choice of output, default is XML.</xs:documentation>
 		</xs:annotation>
 	</xs:element>
-	<xs:element name="error" type="xs:string">
+	<xs:element name="error" type="scan:errorType">
 		<xs:annotation>
 			<xs:documentation xml:lang="en">Message returned by the service, if an error occurs.</xs:documentation>
 		</xs:annotation>
 	</xs:element>
-	<xs:simpleType name="outputTypeType">
-		<xs:annotation>
-			<xs:documentation xml:lang="en">The types of output that can be returned by the service.</xs:documentation>
-		</xs:annotation>
-		<xs:restriction base="xs:string">
-      <xs:enumeration value="xml"/>
-      <xs:enumeration value="json"/>
-      <xs:enumeration value="php"/>
-		</xs:restriction>
-	</xs:simpleType>
 	<xs:element name="term">
 		<xs:annotation>
 			<xs:documentation xml:lang="en">Term (Phrase) returned by the service and number of hits.</xs:documentation>
@@ -143,6 +133,12 @@ You should have received a copy of the GNU Affero General Public License along w
 			</xs:sequence>
 		</xs:complexType>
 	</xs:element>
+	<xs:simpleType name="errorType">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="authentication_error"/>
+			<xs:enumeration value="service_error"/>
+		</xs:restriction>
+	</xs:simpleType>
 	<xs:simpleType name="fieldType">
 		<xs:annotation>
 			<xs:documentation xml:lang="en">The fields that can be scanned through this service.</xs:documentation>
@@ -158,6 +154,16 @@ You should have received a copy of the GNU Affero General Public License along w
 			<xs:enumeration value="phrase.source"/>
 			<xs:enumeration value="phrase.identifier"/>
 			<xs:enumeration value="phrase.anyIndexes"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="outputTypeType">
+		<xs:annotation>
+			<xs:documentation xml:lang="en">The types of output that can be returned by the service.</xs:documentation>
+		</xs:annotation>
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="xml"/>
+			<xs:enumeration value="json"/>
+			<xs:enumeration value="php"/>
 		</xs:restriction>
 	</xs:simpleType>
 </xs:schema>
