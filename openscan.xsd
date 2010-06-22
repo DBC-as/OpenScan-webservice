@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- edited with XMLSpy v2010 (http://www.altova.com) by Dansk Bibliotekscenter A/S (Dansk Bibliotekscenter A/S) -->
+<!-- edited with XMLSpy v2010 rel. 2 (http://www.altova.com) by Dansk Bibliotekscenter A/S (Dansk Bibliotekscenter A/S) -->
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:scan="http://oss.dbc.dk/ns/openscan" targetNamespace="http://oss.dbc.dk/ns/openscan" elementFormDefault="qualified">
 	<xs:annotation>
 		<xs:documentation xml:lang="en">Openscan Service</xs:documentation>
@@ -19,6 +19,7 @@ You should have received a copy of the GNU Affero General Public License along w
 		</xs:annotation>
 		<xs:complexType>
 			<xs:sequence>
+				<xs:element ref="scan:agency" minOccurs="0"/>
 				<xs:element ref="scan:authentication" minOccurs="0"/>
 				<xs:element ref="scan:field"/>
 				<xs:element ref="scan:limit"/>
@@ -26,6 +27,10 @@ You should have received a copy of the GNU Affero General Public License along w
 				<xs:element ref="scan:minFrequency" minOccurs="0"/>
 				<xs:element ref="scan:maxFrequency" minOccurs="0"/>
 				<xs:element ref="scan:prefix" minOccurs="0"/>
+				<xs:element ref="scan:query" minOccurs="0"/>
+				<xs:element ref="scan:scanType" minOccurs="0"/>
+				<xs:element ref="scan:source" minOccurs="0"/>
+				<xs:element ref="scan:timeToWait" minOccurs="0"/>
 				<xs:element ref="scan:upper" minOccurs="0"/>
 				<xs:element ref="scan:callback" minOccurs="0"/>
 				<xs:element ref="scan:outputType" minOccurs="0"/>
@@ -38,10 +43,19 @@ You should have received a copy of the GNU Affero General Public License along w
 		</xs:annotation>
 		<xs:complexType>
 			<xs:choice>
-				<xs:element ref="scan:term" maxOccurs="unbounded"/>
+				<xs:sequence>
+					<xs:element ref="scan:term" maxOccurs="unbounded"/>
+					<xs:element ref="scan:timeUsed" minOccurs="0"/>
+					<xs:element ref="scan:lastScanEntry" minOccurs="0"/>
+				</xs:sequence>
 				<xs:element ref="scan:error"/>
 			</xs:choice>
 		</xs:complexType>
+	</xs:element>
+	<xs:element name="agency" type="xs:string">
+		<xs:annotation>
+			<xs:documentation xml:lang="en">Owner of the objects. Use this to restrict your scan to objects from a specific agency.</xs:documentation>
+		</xs:annotation>
 	</xs:element>
 	<xs:element name="authentication">
 		<xs:annotation>
@@ -68,6 +82,11 @@ You should have received a copy of the GNU Affero General Public License along w
 	<xs:element name="hitCount" type="xs:string">
 		<xs:annotation>
 			<xs:documentation xml:lang="en">Number of hits for a specific term (phrase).</xs:documentation>
+		</xs:annotation>
+	</xs:element>
+	<xs:element name="lastScanEntry" type="xs:string">
+		<xs:annotation>
+			<xs:documentation xml:lang="en">The last scan entry that has been checked</xs:documentation>
 		</xs:annotation>
 	</xs:element>
 	<xs:element name="limit" type="xs:integer">
@@ -101,6 +120,31 @@ You should have received a copy of the GNU Affero General Public License along w
 		</xs:annotation>
 	</xs:element>
 	<xs:element name="prefix" type="xs:string"/>
+	<xs:element name="query" type="xs:string">
+		<xs:annotation>
+			<xs:documentation xml:lang="en">The query language of this service is CQL, and the specific implementation of CQL in this service is described in the opensearch_cql.xml file.</xs:documentation>
+		</xs:annotation>
+	</xs:element>
+	<xs:element name="scanType" type="scan:scanTypeType">
+		<xs:annotation>
+			<xs:documentation xml:lang="en">Type of scan to perform (scan is default - and at the time being the only option)</xs:documentation>
+		</xs:annotation>
+	</xs:element>
+	<xs:element name="source" type="xs:string">
+		<xs:annotation>
+			<xs:documentation xml:lang="en">The source of objects. Use this if you want to restrict your scan to a specific source in the repository.</xs:documentation>
+		</xs:annotation>
+	</xs:element>
+	<xs:element name="timeToWait" type="xs:integer">
+		<xs:annotation>
+			<xs:documentation xml:lang="en">Maximal number of the miliseconds that the user wants to wait for a scan result to be returned</xs:documentation>
+		</xs:annotation>
+	</xs:element>
+	<xs:element name="timeUsed" type="xs:integer">
+		<xs:annotation>
+			<xs:documentation xml:lang="en">Number of miliseconds used to perform scan</xs:documentation>
+		</xs:annotation>
+	</xs:element>
 	<xs:element name="upper" type="xs:string"/>
 	<xs:element name="userIdAut">
 		<xs:annotation>
@@ -164,6 +208,14 @@ You should have received a copy of the GNU Affero General Public License along w
 			<xs:enumeration value="xml"/>
 			<xs:enumeration value="json"/>
 			<xs:enumeration value="php"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="scanTypeType">
+		<xs:annotation>
+			<xs:documentation xml:lang="en">The types of scan that the service can perform</xs:documentation>
+		</xs:annotation>
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="scan"/>
 		</xs:restriction>
 	</xs:simpleType>
 </xs:schema>
