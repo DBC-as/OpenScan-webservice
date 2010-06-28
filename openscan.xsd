@@ -74,7 +74,7 @@ You should have received a copy of the GNU Affero General Public License along w
 			<xs:documentation xml:lang="en">The field to be scanned.</xs:documentation>
 		</xs:annotation>
 	</xs:element>
-	<xs:element name="groupIdAut">
+	<xs:element name="groupIdAut" type="xs:string">
 		<xs:annotation>
 			<xs:documentation xml:lang="en">Identifier of the group (most often a library number) the user belongs to (for authentication purposes)</xs:documentation>
 		</xs:annotation>
@@ -114,7 +114,7 @@ You should have received a copy of the GNU Affero General Public License along w
 			<xs:documentation xml:lang="en">The specific term (phrase) returned by the service.</xs:documentation>
 		</xs:annotation>
 	</xs:element>
-	<xs:element name="passwordAut">
+	<xs:element name="passwordAut" type="xs:string">
 		<xs:annotation>
 			<xs:documentation xml:lang="en">Password (for authentication purposes)</xs:documentation>
 		</xs:annotation>
@@ -146,7 +146,7 @@ You should have received a copy of the GNU Affero General Public License along w
 		</xs:annotation>
 	</xs:element>
 	<xs:element name="upper" type="xs:string"/>
-	<xs:element name="userIdAut">
+	<xs:element name="userIdAut" type="xs:string">
 		<xs:annotation>
 			<xs:documentation xml:lang="en">User identifier (for authentication purposes)</xs:documentation>
 		</xs:annotation>
