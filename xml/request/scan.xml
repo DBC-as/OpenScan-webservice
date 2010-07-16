@@ -1,0 +1,32 @@
+<SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope"
+xmlns:xml="http://www.w3.org/XML/1998/namespace"
+xmlns:tns="http://oss.dbc.dk/ns/openscan_wsdl"
+xmlns:types="http://oss.dbc.dk/ns/openscan"
+xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
+xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+xmlns:xs="http://www.w3.org/2001/XMLSchema"
+xmlns:scan="http://oss.dbc.dk/ns/openscan">
+<SOAP-ENV:Body>
+<types:scanRequest>
+  <scan:agency>?</scan:agency>
+  <scan:authentication>
+    <scan:groupIdAut>?</scan:groupIdAut>
+    <scan:passwordAut>?</scan:passwordAut>
+    <scan:userIdAut>?</scan:userIdAut>
+  </scan:authentication>
+  <scan:field>?</scan:field>
+  <scan:limit>?</scan:limit>
+  <scan:lower>?</scan:lower>
+  <scan:minFrequency>?</scan:minFrequency>
+  <scan:maxFrequency>?</scan:maxFrequency>
+  <scan:prefix>?</scan:prefix>
+  <scan:query>?</scan:query>
+  <scan:scanType>?</scan:scanType>
+  <scan:source>?</scan:source>
+  <scan:timeToWait>?</scan:timeToWait>
+  <scan:upper>?</scan:upper>
+  <scan:callback>?</scan:callback>
+  <scan:outputType>?</scan:outputType>
+</types:scanRequest>
+</SOAP-ENV:Body>
+</SOAP-ENV:Envelope>
