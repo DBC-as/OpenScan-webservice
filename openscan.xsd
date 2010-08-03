@@ -140,7 +140,7 @@ You should have received a copy of the GNU Affero General Public License along w
 			<xs:documentation xml:lang="en">Maximal number of the miliseconds that the user wants to wait for a scan result to be returned</xs:documentation>
 		</xs:annotation>
 	</xs:element>
-	<xs:element name="timeUsed" type="xs:integer">
+	<xs:element name="timeUsed" type="xs:decimal">
 		<xs:annotation>
 			<xs:documentation xml:lang="en">Number of miliseconds used to perform scan</xs:documentation>
 		</xs:annotation>
