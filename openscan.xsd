@@ -132,7 +132,7 @@ You should have received a copy of the GNU Affero General Public License along w
 	</xs:element>
 	<xs:element name="source" type="xs:string">
 		<xs:annotation>
-			<xs:documentation xml:lang="en">The source of objects. Use this if you want to restrict your scan to a specific source in the repository.</xs:documentation>
+			<xs:documentation xml:lang="en">(Not in use yet) The source of objects. Use this if you want to restrict your scan to a specific source in the repository.</xs:documentation>
 		</xs:annotation>
 	</xs:element>
 	<xs:element name="timeToWait" type="xs:integer">
