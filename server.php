@@ -23,7 +23,7 @@
 require_once("OLS_class_lib/webServiceServer_class.php");
 require_once("OLS_class_lib/cql2solr_class.php");
 // required for making remote calls
-// require_once("OLS_class_lib/curl_class.php");
+ require_once("OLS_class_lib/curl_class.php");
 // required for handling xml
 
 // required for caching
@@ -49,6 +49,12 @@ class openscan_server extends webServiceServer {
     parent::__construct($inifile); 
     if( empty($fields) )
       self::$fields=$this->config->get_value("fields","setup");
+
+
+    //var_dump($this->config);
+    //exit;
+    //  print_r(self::$fields);
+    //exit;
    
   }
 
@@ -58,6 +64,8 @@ class openscan_server extends webServiceServer {
  
   public function openScan($params) 
   {
+    //print_r($params);
+    //exit;
     //    if (!$this->aaa->has_right("openscan", 500))
     //  die("authentication_error");
     
@@ -75,7 +83,7 @@ class openscan_server extends webServiceServer {
 	    $response_xmlobj->scanResponse->_value->term[]=$term;
 	  }
       }
-    if( $params->query->_value )
+    if( $params->query->_value || $params->agency->_value)
       {
 	$response_xmlobj->scanResponse->_value->timeUsed->_namespace=$namespace;
 	$response_xmlobj->scanResponse->_value->timeUsed->_value=(1000*$this->watch->splittime("timeToWait"));
@@ -84,6 +92,7 @@ class openscan_server extends webServiceServer {
 	$response_xmlobj->scanResponse->_value->lastScanEntry->_value=$params->lower->_value;
       }
     
+
     $this->watch->stop("response_object");
    
     // if( !isset($response_xmlobj) )
@@ -109,7 +118,8 @@ class openscan_server extends webServiceServer {
   {   
     // set query from params
     $query=$params->query->_value; 
-    if( $query )
+    $agency=$params->agency->_value;
+    if( $query || $agency )
       $data = methods::opensearch_request($params,$this->config,$this->watch);
     else
       $data = methods::openscan_request($params,$this->config,$this->watch);
@@ -123,23 +133,37 @@ $server->handle_request();
 
 class methods {
 
-  public static function opensearch_request(&$params,$config,$watch)
+  static function opensearch_request(&$params,$config,$watch)
   {
     // get opensearch settings from config
     $settings=$config->get_section("opensearch");
+
+
+    $settings["baseurl"]=$config->get_value("baseurl","setup");      
 
     if( !$timeToWait=(float)$params->timeToWait->_value )
       $timeToWait=(float)$settings['timeToWait'];
 
     $num_records=$settings['numRecords'];
 
+    // check for agency
+    if( $agency=$params->agency->_value )
+      {
+	$agencies=$config->get_section("agency");
+
+	$filter_query=$agencies["agency"][$agency];
+	// check if a correct agency is given
+
+	if( !$filter_query )
+	  return array();
+      }
+    
     $watch->start("timeToWait");   
     $ret=array();
 
 
-   
     // remember the original phrase
-    $original_phrase=$params->lower->_value;
+    // $original_phrase=$params->lower->_value;
   
     do{
       // get scan-entries with normal scan
@@ -154,10 +178,14 @@ class methods {
 	      return $ret;	
 	    }
 	  // check if entry is found in solr.
-	  if( mini_solr::query($settings,$params->query->_value,$params->field->_value,$term->_value->name->_value,$watch) )
+	  $numFound= mini_solr::query($settings,$params->query->_value,$params->field->_value,$term->_value->name->_value,$watch,$filter_query); 
+	  if( $numFound > 0 )
 	    {
 	      if( !in_array($term,$ret) )
-		$ret[]=$term; 
+		{
+		  $term->_value->hitCount->_value=$numFound;
+		  $ret[]=$term; 
+		}
 	    }
 	}
    
@@ -184,7 +212,7 @@ class methods {
       return false;
     }      
 
-    $url=$config->get_value("baseurl","setup").$query;
+    $url=$config->get_value("baseurl","setup").$config->get_value("solrparams","setup").$query;
     if( $watch )
       $watch->start("solr");
     $xml=self::get_xml($url,$statuscode);
@@ -304,7 +332,8 @@ class methods {
     else
       $ret.= $prefix."limit=".$params->limit->_value;
     
-    if( $lower=urlencode($params->lower->_value) )
+    // if( $lower=urlencode($params->lower->_value) )
+if( $lower=urlencode(utf8_decode($params->lower->_value)) )
       $ret.= $prefix."lower=".strtolower($lower);
     
     if( $params->minFrequency->_value )
@@ -333,13 +362,11 @@ class methods {
    */
   private static function get_xml($url,&$statuscode) 
   {
-  
-    // use curl class to retrieve results
+      // use curl class to retrieve results
     $curl=new curl();
     $curl->set_url($url);
 
-    //  echo $url;
-    //exit;
+   
 
     $xml=$curl->get();
     
@@ -352,15 +379,37 @@ class methods {
 
 class mini_solr
 {
-  private static $reserved = array("!"=>"","eller"=>"",":"=>"","?"=>"","-"=>"","["=>"","]"=>"");
+  private static $reserved = array("!"=>"","eller"=>"",":"=>"","?"=>"","-"=>"","["=>"","]"=>"","&"=>"");
 
-  public static function ws_query(&$settings,$cql,$field,$phrase=null,$watch)
+  public static function ws_query(&$settings,$cql,$field,$phrase=null,$watch,$filter_query=null)
   {
-    if( $more=self::set_cql($field,$phrase) )
-    $cql.=" AND ".$more;
+    foreach(self::$reserved as $key=>$val)
+      {
+	$search[]=$key;
+	$replace[]=$val;
+      }
 
-    $url=$settings['opensearch_url']."query=".urlencode($cql);
+    $phrase=str_replace($search,"",$phrase);
 
+     if( $more=self::set_cql($field,$phrase) )
+      {
+	if( $cql )
+	  $cql.=" AND ";
+	$cql.=$more;
+      }
+
+    //filter_query
+    if( $filter_query )
+      {
+	if( $cql )
+	  $cql.=" AND ";
+	$cql.=$filter_query;
+      }
+
+    // if( $more=self::set_cql($field,$phrase) )
+    //$cql.=" AND ".$more;
+
+    $url=$settings['baseurl'].$settings['solr_params']."query=".urlencode($cql);
     
     $curl=new curl();
     $curl->set_url($url);
@@ -375,6 +424,7 @@ class mini_solr
 
     if( $status['http_code'] > 200 )
      {
+       echo $url."</br>";
        die( $status['http_code'].$url );
        // TODO log
        return false;
@@ -392,8 +442,9 @@ class mini_solr
     
   }
 
-  public static function query(&$settings,$cql,$field,$phrase=null,$watch)
+  public static function query(&$settings,$cql,$field,$phrase=null,$watch,$filter_query=null)
   {
+   
     foreach(self::$reserved as $key=>$val)
       {
 	$search[]=$key;
@@ -403,11 +454,41 @@ class mini_solr
     $phrase=str_replace($search,"",$phrase);
 
     if( $more=self::set_cql($field,$phrase) )
-      $cql.=" AND ".$more;
+      {
+	if( $cql )
+	  $cql.=" AND ";
+	$cql.=$more;
+      }
 
+    //filter_query
+    if( $filter_query )
+      {
+	if( $cql && $more)
+	  $cql.=" AND (";
+	elseif($cql)
+	  $cql.=" AND ";
+
+	$cql.=$filter_query;
+
+	if( $cql && $more)	 
+	  $cql.=")";
+	
+      }
+
+    //  echo $cql."</br></br>\n\n";
+    
     $query=self::convert($cql);
+    
+    //echo $filter_query."</br></br>\n\n";
+    //echo $query['solr'];
+    // TODO this (str_replace) must be en error from cql2solr_class
+    $solr=$query['solr'];
+    $q=str_replace('%3D',':',$solr);    
+    $url=$settings['baseurl'].$settings['solr_params']."q=".$q;
+    
 
-    $url=$settings['solr_uri'].$settings['solr_params']."q=".$query['solr'];
+    //  echo $url;
+    //exit;
 
     $curl=new curl();
     $curl->set_url($url);
@@ -417,9 +498,9 @@ class mini_solr
     // errorcheck
     $status=$curl->get_status();
 
-    if( $status['http_code'] > 200 )
+    if( $errorcode = $status['http_code'] != 200 )
      {
-       // TODO log
+       verbose::log(FATAL,"solr-http_code : ".$errorcode);
        return false;
      }
   
@@ -486,12 +567,10 @@ class mini_solr
   {
     $dom = new DOMDocument('1.0', 'UTF-8');
     
-    if (!$dom->LoadXML($xml) ) {
-      // die( "No DOM" );
-      //   verbose::log(WARNING,print_r(libxml_get_errors()) );
-
-      echo $xml;
-      exit;
+     if (!$dom->LoadXML($xml) ) {
+     
+       die( "No DOM" );
+         verbose::log(WARNING,print_r(libxml_get_errors()) );
       libxml_clear_errors();
       return false;
     }    
@@ -501,7 +580,8 @@ class mini_solr
     $nodelist=$xpath->query($query);
 
     //  echo  $nodelist->item(0)->getAttribute('numFound')."<br />";
-    return( $nodelist->item(0)->getAttribute('numFound') > 0 );
+    return( $nodelist->item(0)->getAttribute('numFound') );
+
    
   }  
 }
