@@ -516,7 +516,7 @@ class mini_solr
 
   private static function convert($cql)
   {
-    $solr=new cql2solr('opensearch_cql.xml');
+    $solr=new cql2solr('openscan_cql.xml');
 
     $query=$solr->convert($cql);
 
