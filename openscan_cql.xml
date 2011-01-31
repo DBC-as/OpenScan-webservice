@@ -87,4 +87,15 @@
 		</index>
 
 	</indexInfo>
+<configInfo>
+                <supports type="booleanModifier">and</supports>
+                <supports type="booleanModifier">or</supports>
+                <supports type="booleanModifier">not</supports>
+                <supports type="relation">&gt;</supports>
+                <supports type="relation">&lt;</supports>
+                <supports type="relation">=</supports>
+                <supports type="maskingCharacter">?</supports>
+                <supports type="maskingCharacter">*</supports>
+        </configInfo>
+
 </explain>
