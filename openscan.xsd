@@ -28,6 +28,7 @@ You should have received a copy of the GNU Affero General Public License along w
 				<xs:element ref="scan:maxFrequency" minOccurs="0"/>
 				<xs:element ref="scan:prefix" minOccurs="0"/>
 				<xs:element ref="scan:query" minOccurs="0"/>
+				<xs:element ref="scan:repository" minOccurs="0"/>
 				<xs:element ref="scan:scanType" minOccurs="0"/>
 				<xs:element ref="scan:source" minOccurs="0"/>
 				<xs:element ref="scan:timeToWait" minOccurs="0"/>
@@ -123,6 +124,11 @@ You should have received a copy of the GNU Affero General Public License along w
 	<xs:element name="query" type="xs:string">
 		<xs:annotation>
 			<xs:documentation xml:lang="en">The query language of this service is CQL, and the specific implementation of CQL in this service is described in the opensearch_cql.xml file.</xs:documentation>
+		</xs:annotation>
+	</xs:element>
+	<xs:element name="repository" type="xs:string">
+		<xs:annotation>
+			<xs:documentation xml:lang="en">Repository to search. Only need to be specified if different from default</xs:documentation>
 		</xs:annotation>
 	</xs:element>
 	<xs:element name="scanType" type="scan:scanTypeType">
