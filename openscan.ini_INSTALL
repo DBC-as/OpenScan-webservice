@@ -1,7 +1,7 @@
 ; Inifile for openscan                                                                                                
 
 [setup]
-version = 1.5
+version = 2.1
 
 ; wsdl for service
 wsdl = openscan.wsdl
@@ -50,10 +50,28 @@ xmlns[xs] = http://www.w3.org/2001/XMLSchema
 ;path to xml-examples
 xmldir = ./xml
 
+;[validate]
+;validate[request]=openscan.xsd
+
+;allowed fields
+fields[]=phrase.title
+fields[]=phrase.creator
+fields[]=phrase.subject
+fields[]=phrase.description
+fields[]=phrase.date
+fields[]=phrase.type
+fields[]=phrase.identifier
+fields[]=phrase.source
+fields[]=phrase.language
+fields[]=phrase.anyIndexes
+fields[]=phrase.source
+
 [aaa]
 ; aaa Authentication, Access control and Accounting
+;
 ; if aaa_credentials is set, the rights-object is created from
-; the FORS-server or aaa_ip_rights below
+; aaa_ip_rights below if ip-match otherwise it is set from
+; the FORS-server if aaa_credentials contains a valid fors-login
 ;
 ; oci credentials for FORS server
 ;aaa_credentials = foo/bar@foobar.dbc.dk
@@ -73,12 +91,20 @@ xmldir = ./xml
 
 [rest]
 ; valid parameters for rest-request
+action[openScan][] = agency
+action[openScan][authentication][] = groupIdAut
+action[openScan][authentication][] = passwordAut
+action[openScan][authentication][] = userIdAut
 action[openScan][] = field
 action[openScan][] = limit
 action[openScan][] = lower
 action[openScan][] = minFrequency
 action[openScan][] = maxFrequency
 action[openScan][] = prefix
+action[openScan][] = query
+action[openScan][] = scanType
+action[openScan][] = source
+action[openScan][] = timeToWait
 action[openScan][] = upper
 action[openScan][] = outputType
 action[openScan][] = callback
@@ -94,3 +120,32 @@ lower=gorm
 ;test[] = openScan&field=creator&lower=Haruki&limit=10
 ;preg_match[] = hitCount
 ;error[] = Error scanning for creator=Haruki
+
+[opensearch]
+;url to opensearch
+opensearch_url=http://someopensearch.dk/0.14/?action=search&
+solr_uri=http://somesolr-server.dk:8080/apache-solr-1.4.0/select?
+solr_params=wt=xml&fl=fedoraPid&rows=0&
+timeToWait=500
+numRecords=20
+
+; memcache search profile
+;profile_cache_host = localhost
+;profile_cache_port = 11211
+;profile_cache_expire = 600
+
+; search profile service end point
+open_agency = http://someopenagency.dk/2.0/?action=openSearchProfile&agencyId=%s
+
+; default search_profile setting
+agency_fallback = 100200
+profile_fallback = test
+
+
+[agency]
+agency[710100] = (submitter:dbc AND original_format:(anmeld OR artikler OR matvurd OR dr_atlas OR dc_bonanza OR forfatterw OR faktalink)) OR (submitter:710100 AND original_format:katalog)
+agency[721700] = (submitter:dbc AND original_format:(anmeld OR artikler OR matvurd OR dr_atlas OR dc_bonanza OR forfatterw OR faktalink)) OR (submitter:721700 AND original_format:katalog)
+agency[775100] = (submitter:dbc AND original_format:(anmeld OR artikler OR matvurd OR dr_atlas OR dc_bonanza OR forfatterw OR faktalink)) OR (submitter:775100 AND original_format:(katalog)
+agency[150013] = (submitter:150013 AND original_format:(pg OR dbc)) OR submitter:150014
+agency[150015] = submitter:150015 AND original_format:netlydbog
+

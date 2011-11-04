@@ -8,7 +8,8 @@ xmlns:xs="http://www.w3.org/2001/XMLSchema"
 xmlns:scan="http://oss.dbc.dk/ns/openscan">
 <SOAP-ENV:Body>
 <types:scanRequest>
-  <scan:agency>710100</scan:agency>  
+  <scan:agency>100200</scan:agency>  
+  <scan:profile>test</scan:profile>  
   <scan:field>phrase.anyIndexes</scan:field>
   <scan:limit>10</scan:limit>
   <scan:lower>øv for pok</scan:lower>  

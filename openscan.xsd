@@ -20,6 +20,7 @@ You should have received a copy of the GNU Affero General Public License along w
 		<xs:complexType>
 			<xs:sequence>
 				<xs:element ref="scan:agency" minOccurs="0"/>
+				<xs:element ref="scan:profile" minOccurs="0"/>
 				<xs:element ref="scan:authentication" minOccurs="0"/>
 				<xs:element ref="scan:field"/>
 				<xs:element ref="scan:limit"/>
@@ -121,6 +122,11 @@ You should have received a copy of the GNU Affero General Public License along w
 		</xs:annotation>
 	</xs:element>
 	<xs:element name="prefix" type="xs:string"/>
+    <xs:element name="profile" type="xs:string">
+        <xs:annotation>
+            <xs:documentation xml:lang="en">The profile of sources to be searched.</xs:documentation>
+        </xs:annotation>
+    </xs:element>
 	<xs:element name="query" type="xs:string">
 		<xs:annotation>
 			<xs:documentation xml:lang="en">The query language of this service is CQL, and the specific implementation of CQL in this service is described in the opensearch_cql.xml file.</xs:documentation>

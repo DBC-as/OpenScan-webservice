@@ -23,7 +23,7 @@
 require_once("OLS_class_lib/webServiceServer_class.php");
 require_once("OLS_class_lib/cql2solr_class.php");
 // required for making remote calls
- require_once("OLS_class_lib/curl_class.php");
+require_once("OLS_class_lib/curl_class.php");
 // required for handling xml
 
 // required for caching
@@ -32,558 +32,549 @@ require_once("OLS_class_lib/cql2solr_class.php");
 libxml_use_internal_errors(true);
 
 class openscan_server extends webServiceServer {
-  private static $xsd=null;
-  public static $fields=array();
+    private static $xsd = null;
+    public static $fields = array();
 
-  public function __construct($inifile,$schema=null) 
-  {
-    //    cache::flush();
-    if( $schema ) {
-      if( self::$xsd==null ) {
-          $dom=new DOMDocument();
-          $dom->load($schema);
-          self::$xsd=new DOMXPath($dom);
-      }
+    public function __construct($inifile, $schema = null) {
+        //    cache::flush();
+        if ($schema) {
+            if (self::$xsd == null) {
+                $dom = new DOMDocument();
+                $dom->load($schema);
+                self::$xsd = new DOMXPath($dom);
+            }
+        }
+
+        parent::__construct($inifile);
+        if (empty($fields))
+            self::$fields = $this->config->get_value("fields", "setup");
+
+
+        //var_dump($this->config);
+        //exit;
+        //  print_r(self::$fields);
+        //exit;
+
     }
-    
-    parent::__construct($inifile); 
-    if( empty($fields) )
-      self::$fields=$this->config->get_value("fields","setup");
+
+    public function __destruct() { }
+
+    public function openScan($params) {
+        //print_r($params);
+        //exit;
+        //    if (!$this->aaa->has_right("openscan", 500))
+        //  die("authentication_error");
+
+        $namespace = "http://oss.dbc.dk/ns/openscan";
+
+        $terms = $this->terms($params);
+
+        $this->watch->start("response_object");
+
+        if ($terms) {
+            foreach ($terms as $term) {
+                $response_xmlobj->scanResponse->_namespace = $namespace;
+                $response_xmlobj->scanResponse->_value->term[] = $term;
+            }
+        }
+        if ($params->query->_value || $params->agency->_value) {
+            $response_xmlobj->scanResponse->_value->timeUsed->_namespace = $namespace;
+            $response_xmlobj->scanResponse->_value->timeUsed->_value = (1000 * $this->watch->splittime("timeToWait"));
+
+            $response_xmlobj->scanResponse->_value->lastScanEntry->_namespace = $namespace;
+            $response_xmlobj->scanResponse->_value->lastScanEntry->_value = $params->lower->_value;
+        }
 
 
-    //var_dump($this->config);
-    //exit;
-    //  print_r(self::$fields);
-    //exit;
-   
-  }
+        $this->watch->stop("response_object");
 
-  public function __destruct() {
-    
-  }
- 
-  public function openScan($params) 
-  {
-    //print_r($params);
-    //exit;
-    //    if (!$this->aaa->has_right("openscan", 500))
-    //  die("authentication_error");
-    
-    $namespace="http://oss.dbc.dk/ns/openscan";
+        // if( !isset($response_xmlobj) )
+        //  die( "no response_object");
 
-    $terms=$this->terms($params);
+        return $response_xmlobj;
+    }
 
-    $this->watch->start("response_object");
-    
-    if( $terms )
-      {
-	foreach( $terms as $term ) 
-	  {
-	    $response_xmlobj->scanResponse->_namespace=$namespace;
-	    $response_xmlobj->scanResponse->_value->term[]=$term;
-	  }
-      }
-    if( $params->query->_value || $params->agency->_value)
-      {
-	$response_xmlobj->scanResponse->_value->timeUsed->_namespace=$namespace;
-	$response_xmlobj->scanResponse->_value->timeUsed->_value=(1000*$this->watch->splittime("timeToWait"));
-	
-	$response_xmlobj->scanResponse->_value->lastScanEntry->_namespace=$namespace;
-	$response_xmlobj->scanResponse->_value->lastScanEntry->_value=$params->lower->_value;
-      }
-    
 
-    $this->watch->stop("response_object");
-   
-    // if( !isset($response_xmlobj) )
-    //  die( "no response_object");
+    /** \brief Echos config-settings
+    *
+    */
+    public function show_info() {
+        echo "<pre>";
+        echo "version             " . $this->config->get_value("version", "setup") . "<br/>";
+        echo "log                 " . $this->config->get_value("logfile", "setup") . "<br/>";
+        echo "</pre>";
+        die();
+    }
 
-    return $response_xmlobj;
-  }
+    private function terms($params) {
+        // set query from params
+        $query = $params->query->_value;
+        $agency = $params->agency->_value;
+        if ($query || $agency)
+            $data = methods::opensearch_request($params, $this->config, $this->watch);
+        else
+            $data = methods::openscan_request($params, $this->config, $this->watch);
 
- 
-   /** \brief Echos config-settings
-   *
-   */
-  public function show_info() 
-  {
-    echo "<pre>";
-    echo "version             " . $this->config->get_value("version", "setup") . "<br/>";
-    echo "log                 " . $this->config->get_value("logfile", "setup") . "<br/>";
-    echo "</pre>";
-    die();
-  }
-
-  private function terms($params) 
-  {   
-    // set query from params
-    $query=$params->query->_value; 
-    $agency=$params->agency->_value;
-    if( $query || $agency )
-      $data = methods::opensearch_request($params,$this->config,$this->watch);
-    else
-      $data = methods::openscan_request($params,$this->config,$this->watch);
-    
-    return $data;    
-  }
+        return $data;
+    }
 }
 
-$server=new openscan_server("openscan.ini");
+$server = new openscan_server("openscan.ini");
 $server->handle_request();
 
 class methods {
 
-  static function opensearch_request(&$params,$config,$watch)
-  {
-    // get opensearch settings from config
-    $settings=$config->get_section("opensearch");
+    static function opensearch_request(&$params, $config, $watch) {
+        // get opensearch settings from config
+        $settings = $config->get_section("opensearch");
 
 
-    $settings["baseurl"]=$config->get_value("baseurl","setup");      
+        $settings["baseurl"] = $config->get_value("baseurl", "setup");
 
-    if( !$timeToWait=(float)$params->timeToWait->_value )
-      $timeToWait=(float)$settings['timeToWait'];
+        if (!$timeToWait = (float)$params->timeToWait->_value)
+            $timeToWait = (float)$settings['timeToWait'];
 
-    $num_records=$settings['numRecords'];
+        $num_records = $settings['numRecords'];
 
-    // check for agency
-    if( $agency=$params->agency->_value )
-      {
-	$agencies=$config->get_section("agency");
+        // check for agency and profile
+        if (!$agency = $params->agency->_value) 
+            $agency = $config->get_value('agency_fallback', 'opensearch');
+        if (!$profile = $params->profile->_value) 
+            $profile = $config->get_value('profile_fallback', 'opensearch');
+        if ($agency) {
+            $filter_agency = self::get_agencies_from_profile($agency, $params->profile->_value, $config);
+            if (empty($filter_agency)) {
+                $agencies = $config->get_section("agency");
+                $filter_agency = $agencies["agency"][$agency];
+            }
+        }
+        if (empty($filter_agency)) 
+            return array();
 
-	$filter_query=$agencies["agency"][$agency];
-	// check if a correct agency is given
-
-	if( !$filter_query )
-	  return array();
-      }
-    
-    $watch->start("timeToWait");   
-    $ret=array();
+        $watch->start("timeToWait");
+        $ret = array();
 
 
-    // remember the original phrase
-    // $original_phrase=$params->lower->_value;
-  
-    do{
-      // get scan-entries with normal scan
-      $terms=self::openscan_request($params,$config,$watch,$num_records);
-      if( $terms )
-      foreach( $terms as $term )
-	{
-	  $params->lower->_value=$term->_value->name->_value;
-	  if( count($ret)>=$params->limit->_value || (1000*$watch->splittime("timeToWait")) > $timeToWait)
-	    {
-	      $watch->stop("timeToWait");	     
-	      return $ret;	
-	    }
-	  // check if entry is found in solr.
-	  $numFound= mini_solr::query($settings,$params->query->_value,$params->field->_value,$term->_value->name->_value,$watch,$filter_query); 
-	  if( $numFound > 0 )
-	    {
-	      if( !in_array($term,$ret) )
-		{
-		  $term->_value->hitCount->_value=$numFound;
-		  $ret[]=$term; 
-		}
-	    }
-	}
-   
-    }
-    while( ($elapsed=(1000*$watch->splittime("timeToWait")) < $timeToWait));
-    $watch->stop("timeToWait");
-    return $ret;
-  }
+        // remember the original phrase
+        // $original_phrase = $params->lower->_value;
 
- /** Function for handling scan-request 
-   *  @param params; The request mapped to params-object
-   *  @return response;an array of terms, false if something went wrong
-   */
-  public static function openscan_request($params,$config=null,$watch=null,$num_records=null) 
-  {
-    // make an url for request    
-    if( !$query=self::get_query($params,$num_records) ) {
-      verbose::log(WARNING,"openScan:224::could not set query for solr");
-      return false;
+        do {
+            // get scan-entries with normal scan
+            $terms = self::openscan_request($params, $config, $watch, $num_records);
+            if ($terms)
+                foreach( $terms as $term ) {
+                    $params->lower->_value = $term->_value->name->_value;
+                    if (count($ret)>=$params->limit->_value || (1000 * $watch->splittime("timeToWait")) > $timeToWait) {
+                        $watch->stop("timeToWait");
+                        return $ret;
+                    }
+                    // check if entry is found in solr.
+                    //$numFound= mini_solr::query($settings, $params->query->_value, $params->field->_value, $term->_value->name->_value, $watch, $filter_query);
+                    $numFound= mini_solr::query($settings, $params->query->_value, $params->field->_value, $term->_value->name->_value, $watch, rawurlencode($filter_agency));
+                    if ($numFound > 0) {
+                        if (!in_array($term, $ret)) {
+                            $term->_value->hitCount->_value = $numFound;
+                            $ret[] = $term;
+                        }
+                    }
+                }
+        }
+        while (($elapsed = (1000*$watch->splittime("timeToWait")) < $timeToWait));
+        $watch->stop("timeToWait");
+        return $ret;
     }
 
-    if( !$config ){
-      verbose::log(FATAL,"No config given in openscan_request");
-      return false;
-    }      
+    /** Function for handling scan-request
+      *  @param params; The request mapped to params-object
+      *  @return response;an array of terms, false if something went wrong
+      */
+    public static function openscan_request($params, $config=null, $watch=null, $num_records=null) {
+        // make an url for request
+        if (!$query = self::get_query($params, $num_records)) {
+            verbose::log(WARNING, "openScan:224::could not set query for solr");
+            return false;
+        }
 
-    $url=$config->get_value("baseurl","setup").$config->get_value("solrparams","setup").$query;
-    if( $watch )
-      $watch->start("solr");
-    $xml=self::get_xml($url,$statuscode);
-    if( $watch )
-      $watch->stop("solr");
-    
-    if( $statuscode != 200 )   { 
-      verbose::log(FATAL,"openscanRequest::HTTP-errorcode from solr:".$statuscode);
-      return false;
+        if (!$config) {
+            verbose::log(FATAL, "No config given in openscan_request");
+            return false;
+        }
+
+        $url = $config->get_value("baseurl", "setup").$config->get_value("solrparams", "setup").$query;
+        if ($watch)
+            $watch->start("solr");
+        $xml = self::get_xml($url, $statuscode);
+        if ($watch)
+            $watch->stop("solr");
+
+        if ($statuscode != 200) {
+            verbose::log(FATAL, "openscanRequest::HTTP-errorcode from solr:".$statuscode);
+            return false;
+        }
+
+        if ($watch)
+            $watch->start("parse");
+        $ret = self::parse_response($xml, $error);
+        if ($watch)
+            $watch->stop("parse");
+
+        return $ret;
     }
 
-    if( $watch )
-      $watch->start("parse");
-    $ret = self::parse_response($xml,$error);    
-    if( $watch )
-      $watch->stop("parse");
- 
-    return $ret;
-  }  
+    /** Parse xml and map to response-array
+     *  @param xml; the xml to parse
+     *  @return response; xml mapped to response-array
+     */
+    private static function parse_response(&$xml, &$error) {
+        if (!$nodelist = self::get_nodelist($xml, $error))
+            return false;
 
-  /** Parse xml and map to response-array 
-   *  @param xml; the xml to parse
-   *  @return response; xml mapped to response-array
-   */
-  private static function parse_response(&$xml,&$error) 
-  {
-    if( !$nodelist=self::get_nodelist($xml,$error) )
-      return false;
-    
-    $terms=array();
-    foreach( $nodelist as $node ) {
-      $terms[]=self::get_term($node);
-    }    
-    return $terms;
-  }
-
-
-  /**
-     Parse given node and return a response_xml object
-   */
-  private static function get_term($node) 
-  {
-    $namespace="http://oss.dbc.dk/ns/openscan";
-
-    $term->_namespace= $namespace;
-    $term->_value->name->_value=$node->getAttribute("name");
-    $term->_value->name->_namespace=$namespace;
-    $term->_value->hitCount->_value=$node->nodeValue;
-    $term->_value->hitCount->_namespace=$namespace;
-    return $term;
-  }
-   
-
-   /** Return a list of nodes holding result from autocomplete-request
-   *  @param xml; The xml to get nodelist from
-   *  @return nodelist; A list of nodes holding result; false if something went wrong
-   */
-  private static function get_nodelist(&$xml,&$error) 
-  {
-    // parse the result
-    $dom = new DOMDocument('1.0', 'UTF-8');
-    
-    if (!$dom->LoadXML($xml) ) {
-      $error="get_nodelist::Could not load XML";
-      return false;
-    }    
-    
-    $xpath=new DOMXPath($dom);
-    $query="/response/lst[@name='terms']/lst/int";
-    $nodelist=$xpath->query($query);
-    
-    return $nodelist;
-  }
-
- 
-  /** Parsef params-object and map to query-parameters 
-   *  @param params; params-object
-   *  @return ret; given params mapped to url-parameters
-   */
-  private static function get_query($params,$num_records=null) 
-  {
-    //   print_r($params);
-    //exit;
-   
-    
-    $prefix="&terms.";
-    // field and limit are the only required values 
-    if( ! $params->field->_value || ! $params->limit->_value )
-      return false;
-
-    // field check
-    if( openscan_server::$fields ) {
-      $flag=false;
-      foreach( openscan_server::$fields as $key=>$val)
-        if( $val==$params->field->_value ) {
-	  $flag=true;
-          break;
-        }      
-      if( !$flag )
-        die( "error in request; field not valid" );
+        $terms = array();
+        foreach($nodelist as $node) {
+            $terms[] = self::get_term($node);
+        }
+        return $terms;
     }
-    
-    $ret.= $prefix."fl=".$params->field->_value;
-    //    $ret.= $prefix."rows=".$params->limit->_value;
 
-    // Set flag for opensearch.
-    $opensearch_flag=isset($params->query->_value);
-    if( $opensearch_flag )
-      {
-	if( isset($num_records) )
-	  $ret.= $prefix."limit=".$num_records;
-	else
-	  $ret.= $prefix."limit=20";
 
-	$ret.= $prefix."lower.incl=false";
-      }
-    else
-      $ret.= $prefix."limit=".$params->limit->_value;
-    
-    // if( $lower=urlencode($params->lower->_value) )
-if( $lower=urlencode(utf8_decode($params->lower->_value)) )
-      $ret.= $prefix."lower=".strtolower($lower);
-    
-    if( $params->minFrequency->_value )
-      $ret.= $prefix."mincount=".$params->minFrequency->_value;
-    
-    if( $params->maxFrequency->_value )
-      $ret.= $prefix."maxcount=".$params->maxFrequency->_value;
-    
-    if( $params->prefix->_value )
-      $ret.= $prefix."prefix=".$params->prefix->_value;
-    
-    if( $params->upper->_value )
-      $ret.= $prefix."upper=".$params->upper->_value;
-    
-    //always sort by index
-    $ret.=$prefix."sort=index";  
+    /**
+       Parse given node and return a response_xml object
+     */
+    private static function get_term($node) {
+        $namespace = "http://oss.dbc.dk/ns/openscan";
 
-     
-    return $ret;          
-  }
+        $term->_namespace= $namespace;
+        $term->_value->name->_value = $node->getAttribute("name");
+        $term->_value->name->_namespace = $namespace;
+        $term->_value->hitCount->_value = $node->nodeValue;
+        $term->_value->hitCount->_namespace = $namespace;
+        return $term;
+    }
 
-   /** Get xml from solr/autocomplete interface. Set statuscode for remote-call 
-   *  @param url; url and query-parameters for solr-interface
-   *  @param statuscode; The statuscode to be set.
-   *  @return xml; The response from solr/autocomplete
-   */
-  private static function get_xml($url,&$statuscode) 
-  {
-      // use curl class to retrieve results
-    $curl=new curl();
-    $curl->set_url($url);
 
-   
+    /** Return a list of nodes holding result from autocomplete-request
+    *  @param xml; The xml to get nodelist from
+    *  @return nodelist; A list of nodes holding result; false if something went wrong
+    */
+    private static function get_nodelist(&$xml, &$error) {
+        // parse the result
+        $dom = new DOMDocument('1.0', 'UTF-8');
 
-    $xml=$curl->get();
-    
-    $statuscode=$curl->get_status('http_code');
-    
-    return $xml;
-  }  
+        if (!$dom->LoadXML($xml)) {
+            $error = "get_nodelist::Could not load XML";
+            return false;
+        }
+
+        $xpath = new DOMXPath($dom);
+        $query = "/response/lst[@name='terms']/lst/int";
+        $nodelist = $xpath->query($query);
+
+        return $nodelist;
+    }
+
+
+    /** Parsef params-object and map to query-parameters
+     *  @param params; params-object
+     *  @return ret; given params mapped to url-parameters
+     */
+    private static function get_query($params, $num_records=null) {
+        //   print_r($params);
+        //exit;
+
+
+        $prefix = "&terms.";
+        // field and limit are the only required values
+        if (! $params->field->_value || ! $params->limit->_value)
+            return false;
+
+        // field check
+        if (openscan_server::$fields) {
+            $flag = false;
+            foreach(openscan_server::$fields as $key=>$val)
+                if ($val == $params->field->_value) {
+                    $flag = true;
+                    break;
+                }
+            if (!$flag)
+                die( "error in request; field not valid" );
+        }
+
+        $ret .= $prefix."fl=".$params->field->_value;
+        //    $ret.= $prefix."rows=".$params->limit->_value;
+
+        // Set flag for opensearch.
+        $opensearch_flag = isset($params->query->_value);
+        if ($opensearch_flag) {
+            if (isset($num_records))
+                $ret .= $prefix."limit=".$num_records;
+            else
+                $ret .= $prefix."limit=20";
+
+            $ret .= $prefix."lower.incl=false";
+        }
+        else
+            $ret .= $prefix."limit=".$params->limit->_value;
+
+        // if( $lower=urlencode($params->lower->_value) )
+        if ($lower = urlencode(utf8_decode($params->lower->_value)))
+            $ret .= $prefix."lower=".strtolower($lower);
+
+        if ($params->minFrequency->_value)
+            $ret .= $prefix."mincount=".$params->minFrequency->_value;
+
+        if ($params->maxFrequency->_value)
+            $ret .= $prefix."maxcount=".$params->maxFrequency->_value;
+
+        if ($params->prefix->_value)
+            $ret .= $prefix."prefix=".$params->prefix->_value;
+
+        if ($params->upper->_value)
+            $ret .= $prefix."upper=".$params->upper->_value;
+
+        //always sort by index
+        $ret .= $prefix."sort=index";
+
+
+        return $ret;
+    }
+
+    /** Get xml from solr/autocomplete interface. Set statuscode for remote-call
+    *  @param url; url and query-parameters for solr-interface
+    *  @param statuscode; The statuscode to be set.
+    *  @return xml; The response from solr/autocomplete
+    */
+    private static function get_xml($url, &$statuscode) {
+        // use curl class to retrieve results
+        $curl = new curl();
+        $curl->set_url($url);
+
+
+
+        $xml = $curl->get();
+
+        $statuscode = $curl->get_status('http_code');
+
+        return $xml;
+    }
+
+    /** \brief Fetch a profile $profile_name for agency $agency and build Solr filter_query parm
+     *
+     */
+    private function get_agencies_from_profile($agency, $profile_name, &$config) {
+        require_once 'OLS_class_lib/search_profile_class.php';
+        if (!($host = $config->get_value('profile_cache_host', 'opensearch')))
+            $host = $config->get_value('cache_host', 'setup');
+        if (!($port = $config->get_value('profile_cache_port', 'opensearch')))
+            $port = $config->get_value('cache_port', 'setup');
+        if (!($expire = $config->get_value('profile_cache_expire', 'opensearch')))
+            $expire = $config->get_value('cache_expire', 'setup');
+        $profiles = new search_profiles($config->get_value('open_agency', 'opensearch'), $host, $port, $expire);
+        $profile = $profiles->get_profile($agency, $profile_name);
+        if (! is_array($profile))
+            return FALSE;
+        $ret = '';
+        foreach ($profile as $p)
+            $ret .= ($ret ? ' OR ' : '') .
+                   '(submitter:' . $p['sourceOwner'] .  ' AND original_format:' . $p['sourceFormat'] . ')';
+        return $ret;
+    }
+
 }
 
 
-class mini_solr
-{
-  private static $reserved = array("!"=>"","eller"=>"",":"=>"","?"=>"","-"=>"","["=>"","]"=>"","&"=>"");
+class mini_solr {
+    private static $reserved = array("!"=>"", "eller"=>"", ":"=>"", "?"=>"", "-"=>"", "["=>"", "]"=>"", "&"=>"");
 
-  public static function ws_query(&$settings,$cql,$field,$phrase=null,$watch,$filter_query=null)
-  {
-    foreach(self::$reserved as $key=>$val)
-      {
-	$search[]=$key;
-	$replace[]=$val;
-      }
+    public static function ws_query(&$settings, $cql, $field, $phrase=null, $watch, $filter_query=null) {
+        foreach(self::$reserved as $key=>$val) {
+            $search[] = $key;
+            $replace[] = $val;
+        }
 
-    $phrase=str_replace($search,"",$phrase);
+        $phrase = str_replace($search, "", $phrase);
 
-     if( $more=self::set_cql($field,$phrase) )
-      {
-	if( $cql )
-	  $cql.=" AND ";
-	$cql.=$more;
-      }
+        if ($more = self::set_cql($field, $phrase)) {
+            if ( $cql)
+                $cql .= " AND ";
+            $cql .= $more;
+        }
 
-    //filter_query
-    if( $filter_query )
-      {
-	if( $cql )
-	  $cql.=" AND ";
-	$cql.=$filter_query;
-      }
+        //filter_query
+        if ($filter_query) {
+            if ($cql)
+                $cql .= " AND ";
+            $cql .= $filter_query;
+        }
 
-    // if( $more=self::set_cql($field,$phrase) )
-    //$cql.=" AND ".$more;
+        // if( $more=self::set_cql($field, $phrase) )
+        //$cql.=" AND ".$more;
 
-    $url=$settings['baseurl'].$settings['solr_params']."query=".urlencode($cql);
-    
-    $curl=new curl();
-    $curl->set_url($url);
-    $watch->start("ws_opensearch");
-    $result=$curl->get();
-    $watch->stop("ws_opensearch");
+        $url = $settings['baseurl'].$settings['solr_params']."query=".urlencode($cql);
 
-    // errorcheck
-    $status=$curl->get_status();
-    
-    verbose::log(WARNING,$status['http_code'].$url);
+        $curl = new curl();
+        $curl->set_url($url);
+        $watch->start("ws_opensearch");
+        $result = $curl->get();
+        $watch->stop("ws_opensearch");
 
-    if( $status['http_code'] > 200 )
-     {
-       echo $url."</br>";
-       die( $status['http_code'].$url );
-       // TODO log
-       return false;
-     }
-   
-    
-    $ret=self::ws_check($result);
-    /*   if( $ret )
-      {
-	echo $url;
-	exit;
-	}*/
+        // errorcheck
+        $status = $curl->get_status();
 
-    return $ret;
-    
-  }
+        verbose::log(WARNING, $status['http_code'].$url);
 
-  public static function query(&$settings,$cql,$field,$phrase=null,$watch,$filter_query=null)
-  {
-   
-    foreach(self::$reserved as $key=>$val)
-      {
-	$search[]=$key;
-	$replace[]=$val;
-      }
-
-    $phrase=str_replace($search,"",$phrase);
-
-    if( $more=self::set_cql($field,$phrase) )
-      {
-	if( $cql )
-	  $cql.=" AND ";
-	$cql.=$more;
-      }
-
-    //filter_query
-    if( $filter_query )
-      {
-	if( $cql && $more)
-	  $cql.=" AND (";
-	elseif($cql)
-	  $cql.=" AND ";
-
-	$cql.=$filter_query;
-
-	if( $cql && $more)	 
-	  $cql.=")";
-	
-      }
-
-    //  echo $cql."</br></br>\n\n";
-    
-    $query=self::convert($cql);
-    
-    //echo $filter_query."</br></br>\n\n";
-    //echo $query['solr'];
-    // TODO this (str_replace) must be en error from cql2solr_class
-    $solr=$query['solr'];
-    $q=str_replace('%3D',':',$solr);    
-    $url=$settings['baseurl'].$settings['solr_params']."q=".$q;
-    
-
-    //  echo $url;
-    //exit;
-
-    $curl=new curl();
-    $curl->set_url($url);
-    $watch->start("mini_solr");
-    $result=$curl->get();
-    $watch->stop("mini_solr");
-    // errorcheck
-    $status=$curl->get_status();
-
-    if( $errorcode = $status['http_code'] != 200 )
-     {
-       verbose::log(FATAL,"solr-http_code : ".$errorcode);
-       return false;
-     }
-  
-    $ret=self::check($result);
-    /* if( $ret )
-      {
-	echo $url;
-	exit;
-	}*/
-    return $ret;
-  }
+        if ($status['http_code'] > 200) {
+            echo $url."</br>";
+            die( $status['http_code'].$url );
+            // TODO log
+            return false;
+        }
 
 
-  private static function convert($cql)
-  {
-    $solr=new cql2solr('openscan_cql.xml');
+        $ret = self::ws_check($result);
+        /*   if( $ret )
+          {
+        echo $url;
+        exit;
+        }*/
 
-    $query=$solr->convert($cql);
+        return $ret;
 
-    return $query;
-  }
+    }
 
- 
-  private static function set_cql($field,$phrase=null)
-  {
-    if( strlen($field)>1  && strlen($phrase)>1 )
-      {
-	$fields=explode(".",$field);
+    public static function query(&$settings, $cql, $field, $phrase=null, $watch, $filter_query=null) {
 
-	if( $fields[1]=="anyIndexes" )
-	  $ret="cql.anyIndexes";
-	else
-	  $ret="dc.".$fields[1];
-	
-	$ret.="=".$phrase;
-	return $ret;
-      }
-  }
+        foreach(self::$reserved as $key=>$val) {
+            $search[] = $key;
+            $replace[] = $val;
+        }
+
+        $phrase = str_replace($search, "", $phrase);
+
+        if ($more = self::set_cql($field, $phrase)) {
+            if ($cql)
+                $cql .= " AND ";
+            $cql .= $more;
+        }
+
+        //filter_query
+/*
+        if ($filter_query) {
+            if ($cql && $more)
+                $cql .= " AND (";
+            elseif ($cql)
+                $cql .= " AND ";
+
+            $cql .= $filter_query;
+
+            if ($cql && $more)
+                $cql .= ")";
+
+        }
+*/
+
+        //  echo $cql."</br></br>\n\n";
+
+        $query = self::convert($cql);
+
+        //echo $filter_query."</br></br>\n\n";
+        //echo $query['solr'];
+        // TODO this (str_replace) must be en error from cql2solr_class
+        $solr = $query['solr'];
+        $q = str_replace('%3D', ':', $solr);
+        $url = $settings['solr_uri'] . $settings['solr_params'] . "q=" . $q . '&fq=' . $filter_query;
 
 
-  private static function ws_check(&$xml)
-  {
-    $dom = new DOMDocument('1.0', 'UTF-8');
-    
-    if (!$dom->LoadXML($xml) ) {
-      //   verbose::log(WARNING,print_r(libxml_get_errors()) );
-      echo $xml;
-      exit;
-      libxml_clear_errors();
-      return false;
-    }    
-    
-    $xpath=new DOMXPath($dom);
+          //echo $url;
+        //exit;
 
-    $xpath->registerNameSpace("wtf","http://oss.dbc.dk/ns/opensearch");
-    $query="//wtf:hitCount";
-    $nodelist=$xpath->query($query);
-    
-    return( $nodelist->item(0)->nodeValue > 0 );
+        $curl = new curl();
+        $curl->set_url($url);
+        $watch->start("mini_solr");
+        $result = $curl->get();
+        $watch->stop("mini_solr");
+        // errorcheck
+        $status = $curl->get_status();
 
-  }
+        if ($errorcode = $status['http_code'] != 200) {
+            verbose::log(FATAL, "solr-http_code : ".$errorcode);
+            return false;
+        }
 
-  private static function check(&$xml)
-  {
-    $dom = new DOMDocument('1.0', 'UTF-8');
-    
-     if (!$dom->LoadXML($xml) ) {
-     
-       die( "No DOM" );
-         verbose::log(WARNING,print_r(libxml_get_errors()) );
-      libxml_clear_errors();
-      return false;
-    }    
-    
-    $xpath=new DOMXPath($dom);
-    $query="//result";
-    $nodelist=$xpath->query($query);
+        $ret = self::check($result);
+        /* if( $ret )
+          {
+        echo $url;
+        exit;
+        }*/
+        return $ret;
+    }
 
-    //  echo  $nodelist->item(0)->getAttribute('numFound')."<br />";
-    return( $nodelist->item(0)->getAttribute('numFound') );
 
-   
-  }  
+    private static function convert($cql) {
+        $solr = new cql2solr('openscan_cql.xml');
+
+        $query = $solr->convert($cql);
+
+        return $query;
+    }
+
+
+    private static function set_cql($field, $phrase=null) {
+        if (strlen($field)>1  && strlen($phrase)>1 ) {
+            $fields = explode(".", $field);
+
+            if ($fields[1] == "anyIndexes")
+                $ret = "cql.anyIndexes";
+            else
+                $ret = "dc.".$fields[1];
+
+            $ret .= "=" . $phrase;
+            return $ret;
+        }
+    }
+
+
+    private static function ws_check(&$xml) {
+        $dom = new DOMDocument('1.0', 'UTF-8');
+
+        if (!$dom->LoadXML($xml)) {
+            //   verbose::log(WARNING, print_r(libxml_get_errors()) );
+            echo $xml;
+            exit;
+            libxml_clear_errors();
+            return false;
+        }
+
+        $xpath = new DOMXPath($dom);
+
+        $xpath->registerNameSpace("wtf", "http://oss.dbc.dk/ns/opensearch");
+        $query = "//wtf:hitCount";
+        $nodelist = $xpath->query($query);
+
+        return ($nodelist->item(0)->nodeValue > 0);
+
+    }
+
+    private static function check(&$xml) {
+        $dom = new DOMDocument('1.0', 'UTF-8');
+
+        if (!$dom->LoadXML($xml)) {
+
+            die( "No DOM" );
+            verbose::log(WARNING, print_r(libxml_get_errors()) );
+            libxml_clear_errors();
+            return false;
+        }
+
+        $xpath = new DOMXPath($dom);
+        $query = "//result";
+        $nodelist = $xpath->query($query);
+
+        //  echo  $nodelist->item(0)->getAttribute('numFound')."<br />";
+        return ($nodelist->item(0)->getAttribute('numFound'));
+
+
+    }
 }
 ?>
 
