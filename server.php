@@ -71,20 +71,20 @@ class openscan_server extends webServiceServer {
 
         $this->watch->start("response_object");
 
-        if ($terms) {
-            foreach ($terms as $term) {
-                $response_xmlobj->scanResponse->_namespace = $namespace;
-                $response_xmlobj->scanResponse->_value->term[] = $term;
+        if (is_array($terms)) {
+            $response_xmlobj->scanResponse->_namespace = $namespace;
+            $response_xmlobj->scanResponse->_value->term = $terms;
+            if ($params->query->_value || $params->agency->_value) {
+                $response_xmlobj->scanResponse->_value->timeUsed->_namespace = $namespace;
+                $response_xmlobj->scanResponse->_value->timeUsed->_value = (1000 * $this->watch->splittime("timeToWait"));
+                $response_xmlobj->scanResponse->_value->lastScanEntry->_namespace = $namespace;
+                $response_xmlobj->scanResponse->_value->lastScanEntry->_value = $params->lower->_value;
             }
+        } elseif ($terms) {
+            $response_xmlobj->scanResponse->_namespace = $namespace;
+            $response_xmlobj->scanResponse->_value->error->_namespace = $namespace;
+            $response_xmlobj->scanResponse->_value->error->_value = $terms;
         }
-        if ($params->query->_value || $params->agency->_value) {
-            $response_xmlobj->scanResponse->_value->timeUsed->_namespace = $namespace;
-            $response_xmlobj->scanResponse->_value->timeUsed->_value = (1000 * $this->watch->splittime("timeToWait"));
-
-            $response_xmlobj->scanResponse->_value->lastScanEntry->_namespace = $namespace;
-            $response_xmlobj->scanResponse->_value->lastScanEntry->_value = $params->lower->_value;
-        }
-
 
         $this->watch->stop("response_object");
 
@@ -143,13 +143,15 @@ class methods {
             $profile = $config->get_value('profile_fallback', 'opensearch');
         if ($agency) {
             $filter_agency = self::get_agencies_from_profile($agency, $params->profile->_value, $config);
+/*
             if (empty($filter_agency)) {
                 $agencies = $config->get_section("agency");
                 $filter_agency = $agencies["agency"][$agency];
             }
+*/
         }
         if (empty($filter_agency)) 
-            return array();
+            return 'Cannot find search_profile for agency: ' . $agency . ' and profile: ' . $profile;
 
         $watch->start("timeToWait");
         $ret = array();
