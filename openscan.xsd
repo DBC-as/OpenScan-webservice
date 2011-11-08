@@ -173,7 +173,7 @@ You should have received a copy of the GNU Affero General Public License along w
 			<xs:documentation xml:lang="en">Choice of output, default is XML.</xs:documentation>
 		</xs:annotation>
 	</xs:element>
-	<xs:element name="error" type="scan:errorType">
+	<xs:element name="error" type="xs:string">
 		<xs:annotation>
 			<xs:documentation xml:lang="en">Message returned by the service, if an error occurs.</xs:documentation>
 		</xs:annotation>
@@ -189,12 +189,6 @@ You should have received a copy of the GNU Affero General Public License along w
 			</xs:sequence>
 		</xs:complexType>
 	</xs:element>
-	<xs:simpleType name="errorType">
-		<xs:restriction base="xs:string">
-			<xs:enumeration value="authentication_error"/>
-			<xs:enumeration value="service_error"/>
-		</xs:restriction>
-	</xs:simpleType>
 	<xs:simpleType name="fieldType">
 		<xs:annotation>
 			<xs:documentation xml:lang="en">The fields that can be scanned through this service.</xs:documentation>
