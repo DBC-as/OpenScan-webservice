@@ -481,9 +481,7 @@ class mini_solr {
         //echo $filter_query."</br></br>\n\n";
         //echo $query['solr'];
         // TODO this (str_replace) must be en error from cql2solr_class
-        $solr = $query['solr'];
-        $q = str_replace('%3D', ':', $solr);
-        $url = $settings['solr_uri'] . $settings['solr_params'] . "q=" . $q . '&fq=' . $filter_query;
+        $url = $settings['solr_uri'] . $settings['solr_params'] . "q=" . urlencode($query) . '&fq=' . $filter_query;
 
 
           //echo $url;
@@ -515,9 +513,10 @@ class mini_solr {
     private static function convert($cql) {
         $solr = new cql2solr('openscan_cql.xml');
 
-        $query = $solr->convert($cql);
+        //$query = $solr->convert($cql);
+        $query = $solr->edismax_convert($cql);
 
-        return $query;
+        return $query['edismax'];
     }
 
 
