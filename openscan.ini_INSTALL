@@ -92,6 +92,7 @@ fields[]=phrase.source
 [rest]
 ; valid parameters for rest-request
 action[openScan][] = agency
+action[openScan][] = profile
 action[openScan][authentication][] = groupIdAut
 action[openScan][authentication][] = passwordAut
 action[openScan][authentication][] = userIdAut
@@ -123,11 +124,12 @@ lower=gorm
 
 [opensearch]
 ;url to opensearch
-opensearch_url=http://someopensearch.dk/0.14/?action=search&
-solr_uri=http://somesolr-server.dk:8080/apache-solr-1.4.0/select?
-solr_params=wt=xml&fl=fedoraPid&rows=0&
-timeToWait=500
-numRecords=20
+opensearch_url = http://someopensearch.dk/0.14/?action=search&
+solr_uri = http://somesolr-server.dk:8080/apache-solr-1.4.0/select?
+solr_params = wt=xml&fl=fedoraPid&rows=0&
+timeToWait = 500
+numRecords = 20
+search_profile_version = 2
 
 ; memcache search profile
 ;profile_cache_host = localhost
@@ -135,7 +137,7 @@ numRecords=20
 ;profile_cache_expire = 600
 
 ; search profile service end point
-open_agency = http://someopenagency.dk/2.0/?action=openSearchProfile&agencyId=%s
+open_agency = http://someopenagency.dk/2.0/?action=openSearchProfile&agencyId=%s&profileVersion=%s
 
 ; default search_profile setting
 agency_fallback = 100200
