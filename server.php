@@ -351,8 +351,10 @@ class methods
   *  @return xml; The response from solr/autocomplete
   */
   private static function get_xml($url, &$statuscode) {
+  static $curl;
     // use curl class to retrieve results
-    $curl = new curl();
+    if (empty($curl))
+      $curl = new curl();
     $curl->set_url($url);
 
 
@@ -360,6 +362,7 @@ class methods
     $xml = $curl->get();
 
     $statuscode = $curl->get_status('http_code');
+    $curl->close();
 
     return $xml;
   }
@@ -402,6 +405,7 @@ class mini_solr
   private static $reserved = array("!"=>"", "eller"=>"", ":"=>"", "?"=>"", "-"=>"", "["=>"", "]"=>"", "&"=>"");
 
   public static function ws_query(&$settings, $cql, $field, $phrase=null, $watch, $filter_query=null) {
+  static $curl;
     foreach(self::$reserved as $key=>$val) {
       $search[] = $key;
       $replace[] = $val;
@@ -427,7 +431,8 @@ class mini_solr
 
     $url = $settings['baseurl'].$settings['solr_params']."query=".urlencode($cql);
 
-    $curl = new curl();
+    if (empty($curl))
+      $curl = new curl();
     $curl->set_url($url);
     $watch->start("ws_opensearch");
     $result = $curl->get();
@@ -435,6 +440,7 @@ class mini_solr
 
     // errorcheck
     $status = $curl->get_status();
+    $curl->close();
 
     verbose::log(WARNING, $status['http_code'].$url);
 
@@ -458,6 +464,7 @@ class mini_solr
   }
 
   public static function query(&$settings, $cql, $field, $phrase=null, $watch, $filter_query=null) {
+  static $curl;
 
     foreach(self::$reserved as $key=>$val) {
       $search[] = $key;
@@ -501,13 +508,15 @@ class mini_solr
     //echo $url;
     //exit;
 
-    $curl = new curl();
+    if (empty($curl))
+      $curl = new curl();
     $curl->set_url($url);
     $watch->start("mini_solr");
     $result = $curl->get();
     $watch->stop("mini_solr");
     // errorcheck
     $status = $curl->get_status();
+    $curl->close();
 
     if ($errorcode = $status['http_code'] != 200) {
       verbose::log(FATAL, "solr-http_code : ".$errorcode);
